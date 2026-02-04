@@ -1,7 +1,8 @@
 import { app } from "./app.js"
-import { connectToDatabase } from "./db/mongo.js"
+import { connectToDatabase } from "./shared/db/mongo.js"
+import { ENV } from "./shared/env.js"
 
-const PORT = process.env.APP_PORT || 3000
+const PORT = ENV.port || 3000
 
 export async function startServer() {
     await connectToDatabase('life')
