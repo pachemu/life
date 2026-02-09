@@ -4,6 +4,7 @@ import type { Book } from '../domain/book.entity.js'
 import { HTTP_STATUSES } from "../../../shared/HTTP_STATUSES.js"
 import { useCases } from "../application/book.useCases.js"
 import { bookRepositoryMongo } from "../infrastructure/book.mongo.repository.js"
+import { middlewares } from "./book.middlewares.js"
 
 export const getBookRouter = (router: Router) => {
   // Query запросы
@@ -13,7 +14,7 @@ export const getBookRouter = (router: Router) => {
       req: RequestWithQuery<Book>,
       res: Response<{ message: BookViewModel[] }>,
     ) => {
-      let books = await useCases.getAllBooks(bookRepositoryMongo)
+      let books = await useCases.getBooks(bookRepositoryMongo, req.query)
       return res.status(HTTP_STATUSES.OK_200).json({ message: books })
     },
   )
@@ -33,14 +34,15 @@ export const getBookRouter = (router: Router) => {
 
   router.post(
     '/',
+    middlewares.validationCreateBookMiddleware,
     // validateJsonBody,
     // validationTitleMiddleware,
     // inputValidationMiddleware,
     async (
       req: RequestWithBody<PostBookModel>,
-      res: Response<{ message: BookViewModel | string }>,
+      res: Response<{ message: BookViewModel }>,
     ) => {
-      let newBook;
+      let newBook: BookViewModel;
       newBook = await useCases.createBook(bookRepositoryMongo, req.body)
       return res.status(HTTP_STATUSES.CREATED_201).json({ message: newBook })
     },
@@ -52,26 +54,44 @@ export const getBookRouter = (router: Router) => {
     // inputValidationMiddleware,
     async (
       req: RequestWithParams<DeleteBookModel>,
-      res: Response<{ message: BookViewModel[] | boolean }>,
+      res: Response<{ message: String | boolean }>,
     ) => {
-      let newBook = await useCases.deleteBook(bookRepositoryMongo, req.params.id)
-
-      return res.status(HTTP_STATUSES.OK_200).json({ message: newBook })
-     
+      try {
+        let result = await useCases.deleteBook(bookRepositoryMongo, req.params.id)
+        return res.status(HTTP_STATUSES.OK_200).json({ message: result })
+      } catch (e) {
+        return res.status(HTTP_STATUSES.NOT_FOUND_404).json({message: 'book not found'})
+      }
     },
-  )
+  ),
+
+  router.delete('/', 
+    async (
+      res: Response<{ message: boolean }>
+    ) => {
+      let result = await useCases.deleteAllBooks(bookRepositoryMongo)
+
+      return res.status(HTTP_STATUSES.OK_200).json({ message: result})
+    })
+  
+  ,
 
   router.put(
     '/:id',
+    middlewares.validationUpdateBookMiddleware,
     // validationTitleMiddleware,
     // validationIdMiddleware,
     // inputValidationMiddleware,
     async (
       req: RequestWithParamsAndBody<UpdateBookModelParams, UpdateBookModelBody>,
-      res: Response<{ message: any }>,
+      res: Response<{ message: BookViewModel | string }>,
     ) => {
-      let newBook = await useCases.updateBook(bookRepositoryMongo, req.params.id, req.body)
-      return res.status(HTTP_STATUSES.OK_200).json({ message: newBook })
+      try {
+        let newBook = await useCases.updateBook(bookRepositoryMongo, req.params.id, req.body)
+        return res.status(HTTP_STATUSES.OK_200).json({ message: newBook })
+      } catch(e) {
+        return res.status(HTTP_STATUSES.NOT_FOUND_404).json({message: "book not found"})
+      }
     },
   )
 }

@@ -1,7 +1,13 @@
-import type { BookRepository, CreateBookInput, UpdateBookInput } from "../domain/book.repository.js"
+import type { BookRepository, CreateBookInput, UpdateBookInput, BookQuery } from "../domain/book.repository.js"
+import { NotFoundError } from "./error.js";
 
-const getAllBooks = async (repo: BookRepository) => {
-    const books = await repo.findAll()
+const getBooks = async (repo: BookRepository, query: BookQuery) => {
+    let books;
+    if(!query.title) {
+        books = await repo.findAll()
+    } else {
+        books = await repo.findByQuery(query)
+    }
     return books
 }
 
@@ -29,17 +35,22 @@ const deleteBook = async (repo: BookRepository, bookId: string) => {
     return book
 }
 
+const deleteAllBooks = async (repo: BookRepository) => {
+    let result = await repo.deleteAll()
+    return result
+}
+
 const updateBook = async (repo: BookRepository, bookId: string, bookData: UpdateBookInput) => {
     let book = await repo.update(bookId, bookData)
     return book
 }
 
 export const useCases = {
-    getAllBooks,
+    getBooks: getBooks,
     getBookById,
     readPages,
     deleteBook,
+    deleteAllBooks,
     createBook,
     updateBook,
-
 }

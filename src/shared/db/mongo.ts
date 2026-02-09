@@ -22,3 +22,12 @@ export function getDb <T extends Document>  (name: string): Collection<T> {
     }
     return db.collection<T>(name)
 }
+
+export async function disconnectToDatabase() {
+    try {
+        await client.close()
+        console.log('disconnect mongoDb')
+    } catch(error) {
+        console.log('mongo db couldnt disconnect, error:', error)
+    }
+}
