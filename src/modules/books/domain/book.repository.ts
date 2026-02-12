@@ -7,9 +7,14 @@ export type CreateBookInput = {
     totalPages: number
 }
 
-export type UpdateBookInput = CreateBookInput
+export type UpdateBookInput = Partial<CreateBookInput>
 
-export type BookQuery = Omit<Book, 'id'>
+export type BookQuery = {
+  title?: string
+  author?: string
+  readPages?: number
+  totalPages?: number
+}
 
 export interface BookRepository {
   findAll(): Promise<Book[]>

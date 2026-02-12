@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import {isValidObjectId} from 'mongoose'
 import * as z from 'zod'
 
 type MiddlewareFunction = (
@@ -15,10 +16,10 @@ type ValidateInput = (
   }>
 ) => MiddlewareFunction;
 
-const title = z.string().trim().min(3)
-const author = z.string().trim().min(3)
-const readPages = z.number().int().nonnegative()
-const totalPages = z.number().int().min(2)
+const title = z.string().trim().min(3).max(100)
+const author = z.string().trim().min(3).max(100)
+const readPages = z.number().int().min(0)
+const totalPages = z.number().int().min(1)
 
 
 const bookCreateSchema = z.object({ 
@@ -41,8 +42,13 @@ z.object({
     })
 })
 
-const idParamSchema = z.strictObject({
-    id: z.string().min(1)
+const idParamSchema = z.object({
+  params: z.object({
+    id: z.string()
+    .refine((val) => isValidObjectId(val), {
+      message: 'invalid id format'
+    })
+  })
 })
 
 const validateInput: ValidateInput =
@@ -71,5 +77,6 @@ const validateInput: ValidateInput =
 
 export const middlewares = {
     validationCreateBookMiddleware: validateInput(bookCreateSchema),
-    validationUpdateBookMiddleware: validateInput(bookUpdateSchema)
+    validationUpdateBookMiddleware: validateInput(bookUpdateSchema),
+    validationIdBookMiddleware: validateInput(idParamSchema)
 }

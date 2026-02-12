@@ -11,4 +11,9 @@ export type bookDbModel = {
 
 export type createBookDbModel =  Omit<bookDbModel, '_id'>
 
-export type updateBookDbModel = Omit<bookDbModel, "_id">
+export type updateBookDbModel = {
+    title: string | undefined
+    author: string | undefined
+    readPages: number | undefined
+    totalPages: number | undefined
+}

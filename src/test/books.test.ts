@@ -47,6 +47,14 @@ describe('/books', () => {
 
     expect(res.body.message).toEqual(createdBooks.find((book) => book.id === id))
   })
+  it('should return 400 and message about invalid id parameters', async () => {
+    const id = createdBooks[0]?.id.slice(1)
+    await request(app).get(`/books/${id}`)
+    .expect(HTTP_STATUSES.BAD_REQUEST_400).expect(({body}) => {
+      expect(body.message).toBe('Validation failed')
+    })
+  })
+
   it('should return 200 and good array by query parameters', async () => {
     const data: GetBookData = { title: 'замок' }
 
@@ -93,9 +101,19 @@ describe('/books', () => {
 
 
   it('shouldn`t delete item with unexpected id', async () => {
+    const id = '00000020f51bb4362eee2a4d'
     await request(app)
-      .delete(`/books/507f1f77bcf86cd799439011`)
-      .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'book not found' })
+      .delete(`/books/${id}`)
+      .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'Book not found' })
+  })
+  
+  it('shouldn`t delete item with invalid id format', async () => {
+    const id = createdBooks[0]?.id.slice(1)
+    await request(app)
+      .delete(`/books/${id}`)
+      .expect(HTTP_STATUSES.BAD_REQUEST_400).expect(({body}) => {
+        expect(body.message).toBe('Validation failed')
+      })
   })
 
   it(`should update book with correct data`, async () => {
@@ -105,19 +123,30 @@ describe('/books', () => {
       .expect(HTTP_STATUSES.OK_200)
 
     const updatedDirection = res.body.message
-    expect(updatedDirection).toEqual({
-      ...createdBooks[0],
-      title: 'Война и пиво', // два title
-    })
+    expect(updatedDirection.title).toBe('Война и пиво')
+    expect(updatedDirection.id).toBe(createdBooks[0]?.id)
   })
 
-  it(`shouldn't update book with unexpected id`, async () => {
+  it(`shouldn't update book with unexpected id and return 404`, async () => {
+    const id = '00000020f51bb4362eee2a4d'
     await request(app)
-      .put(`/books/AEAEAEAEAEAEAEA`)
+      .put(`/books/${id}`)
       .send({
         title: 'НЕ ДОЛЖНО БЫТЬ',
       })
-      .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'book not found' })
+      .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'Book not found' })
+  })
+
+  it(`shouldn't update book with invalid id format and return 400`, async () => {
+    const id = createdBooks[0]?.id.slice(1)
+    await request(app)
+      .put(`/books/${id}`)
+      .send({
+        title: 'НЕ ДОЛЖНО БЫТЬ',
+      })
+      .expect(HTTP_STATUSES.BAD_REQUEST_400).expect(({body}) => {
+        expect(body.message).toBe('Validation failed')
+      })
   })
 
   it(`shouldn't update book with incorrected data`, async () => {
@@ -125,18 +154,9 @@ describe('/books', () => {
       .put(`/books/${createdBooks[0]?.id}`)
       .send(incorrectedData)
       .expect(HTTP_STATUSES.BAD_REQUEST_400).expect(({body}) => {
-        expect(body.message === 'Validation failed')
+        expect(body.message).toBe('Validation failed')
       })
     })
-
-  it(`shouldn't update book with unexpected id`, async () => {
-    await request(app)
-      .put(`/books/5465561516516fs156fs516fs5667676767767677`)
-      .send({
-        title: 'несуществующее айди',
-      })
-      .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'book not found' })
-  })
 })
 
 

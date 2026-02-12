@@ -17,9 +17,15 @@ const findAll = async (): Promise <Book[]> => {
 }
 
 const findByQuery = async (query: BookQuery): Promise<Book[]> => {
-    const collection = getCollection()
-    let docs = await collection.find({title: {$regex: query.title, $options: 'i'}}).toArray()
-    return docs.map(bookMapper.toDomain)
+  const collection = getCollection()
+  const filter: any = {}
+  if (query.title) filter.title = { $regex: query.title, $options: 'i' }
+  if (query.author) filter.author = { $regex: query.author, $options: 'i' }
+  if (query.readPages !== undefined) filter.readPages = query.readPages
+  if (query.totalPages !== undefined) filter.totalPages = query.totalPages
+
+  const docs = await collection.find(filter).toArray()
+  return docs.map(bookMapper.toDomain)
 }
 
 const findById = async (id: string): Promise<Book | null> => {
