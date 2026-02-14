@@ -5,14 +5,14 @@ export default {
 
   globals: {
     'ts-jest': {
-      useESM: true
-    }
+      useESM: true,
+    },
   },
 
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1'
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 
   testPathIgnorePatterns: ['/dist/'],
-  modulePathIgnorePatterns: ['/dist/']
-}
+  modulePathIgnorePatterns: ['/dist/'],
+};

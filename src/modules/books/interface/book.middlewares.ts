@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
-import {isValidObjectId} from 'mongoose'
-import * as z from 'zod'
+import { isValidObjectId } from 'mongoose';
+import * as z from 'zod';
 
 type MiddlewareFunction = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => void;
 
 type ValidateInput = (
@@ -13,52 +13,47 @@ type ValidateInput = (
     body?: z.ZodTypeAny;
     query?: z.ZodTypeAny;
     params?: z.ZodTypeAny;
-  }>
+  }>,
 ) => MiddlewareFunction;
 
-const title = z.string().trim().min(3).max(100)
-const author = z.string().trim().min(3).max(100)
-const readPages = z.number().int().min(0)
-const totalPages = z.number().int().min(1)
+const title = z.string().trim().min(3).max(100);
+const author = z.string().trim().min(3).max(100);
+const readPages = z.number().int().min(0);
+const totalPages = z.number().int().min(1);
 
+const bookCreateSchema = z.object({
+  body: z.object({
+    title: title,
+    author: author,
+    readPages: readPages,
+    totalPages: totalPages,
+  }),
+});
 
-const bookCreateSchema = z.object({ 
-    body: z.object({
-        title: title,
-        author: author,
-        readPages: readPages,
-        totalPages: totalPages
-    })
-
-})
-
-const bookUpdateSchema = 
-z.object({ 
-    body: z.object({
-        title: title.optional(),
-        author: author.optional(),
-        readPages: readPages.optional(),
-        totalPages: totalPages.optional()
-    })
-})
+const bookUpdateSchema = z.object({
+  body: z.object({
+    title: title.optional(),
+    author: author.optional(),
+    readPages: readPages.optional(),
+    totalPages: totalPages.optional(),
+  }),
+});
 
 const idParamSchema = z.object({
   params: z.object({
-    id: z.string()
-    .refine((val) => isValidObjectId(val), {
-      message: 'invalid id format'
-    })
-  })
-})
+    id: z.string().refine((val) => isValidObjectId(val), {
+      message: 'invalid id format',
+    }),
+  }),
+});
 
 const validateInput: ValidateInput =
   (schema: z.ZodSchema): MiddlewareFunction =>
   (req: Request, res: Response, next) => {
-
     const result = schema.safeParse({
       body: req.body,
       query: req.query,
-      params: req.params
+      params: req.params,
     });
 
     if (!result.success) {
@@ -67,8 +62,8 @@ const validateInput: ValidateInput =
         errors: result.error.issues.map((err) => ({
           path: err.path.join('.'),
           message: err.message,
-          code: err.code
-        }))
+          code: err.code,
+        })),
       });
     }
 
@@ -76,7 +71,7 @@ const validateInput: ValidateInput =
   };
 
 export const middlewares = {
-    validationCreateBookMiddleware: validateInput(bookCreateSchema),
-    validationUpdateBookMiddleware: validateInput(bookUpdateSchema),
-    validationIdBookMiddleware: validateInput(idParamSchema)
-}
+  validationCreateBookMiddleware: validateInput(bookCreateSchema),
+  validationUpdateBookMiddleware: validateInput(bookUpdateSchema),
+  validationIdBookMiddleware: validateInput(idParamSchema),
+};

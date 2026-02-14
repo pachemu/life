@@ -1,36 +1,36 @@
-import type { Request } from 'express'
+import type { Request } from 'express';
 
 export type BookViewModel = {
-    id: string,
-    title: string,
-    author: string,
-    totalPages: number,
-    readPages: number
-}
+  id: string;
+  title: string;
+  author: string;
+  totalPages: number;
+  readPages: number;
+};
 
 export type GetBookModel = {
-    id: string
-}
-export type PostBookModel = Omit<BookViewModel, 'id'>
+  id: string;
+};
+export type PostBookModel = Omit<BookViewModel, 'id'>;
 
 export type DeleteBookModel = {
-    id: string
-}
+  id: string;
+};
 
-export type UpdateBookModelBody = Omit<BookViewModel, 'id'>
+export type UpdateBookModelBody = Omit<BookViewModel, 'id'>;
 
 export type UpdateBookModelParams = {
-    id: string
-}
+  id: string;
+};
 
 export type BookQuery = {
-  title?: string
-  author?: string
-  readPages?: number
-  totalPages?: number
-}
+  title?: string;
+  author?: string;
+  readPages?: number;
+  totalPages?: number;
+};
 
-export type RequestWithBody<T> = Request<{}, {}, T>
-export type RequestWithQuery<T> = Request<{}, {}, {}, T>
-export type RequestWithParams<T> = Request<T>
-export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>
+export type RequestWithBody<T> = Request<{}, {}, T>;
+export type RequestWithQuery<T> = Request<{}, {}, {}, T>;
+export type RequestWithParams<T> = Request<T>;
+export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>;
