@@ -23,6 +23,13 @@ export type UpdateBookModelParams = {
     id: string
 }
 
+export type BookQuery = {
+  title?: string
+  author?: string
+  readPages?: number
+  totalPages?: number
+}
+
 export type RequestWithBody<T> = Request<{}, {}, T>
 export type RequestWithQuery<T> = Request<{}, {}, {}, T>
 export type RequestWithParams<T> = Request<T>
