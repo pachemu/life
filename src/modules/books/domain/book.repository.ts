@@ -16,17 +16,6 @@ export type BookQuery = {
   totalPages?: number;
 };
 
-export type CreateUserInput = {
-  email: string;
-  login: string;
-  password: string;
-};
-
-export type LoginUserInput = {
-  login: string;
-  password: string;
-};
-
 export interface BookRepository {
   findAll(): Promise<Book[]>;
   findByQuery(query: BookQuery): Promise<Book[]>;
@@ -35,6 +24,6 @@ export interface BookRepository {
   update(id: string, data: UpdateBookInput): Promise<Book>;
   delete(id: string): Promise<boolean>;
   deleteAll(): Promise<boolean>;
-  createUser(data: CreateUserInput): Promise<string>;
-  loginUser(data: LoginUserInput): Promise<string>;
+  // createUser(data: CreateUserInput): Promise<string>;
+  // loginUser(data: LoginUserInput): Promise<string>;
 }

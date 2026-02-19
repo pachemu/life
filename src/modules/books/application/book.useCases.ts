@@ -68,31 +68,6 @@ const updateBook = async (
   return result;
 };
 
-// user cases
-
-const createUser = async (
-  repo: BookRepository,
-  userData: {
-    email: string;
-    login: string;
-    password: string;
-  },
-) => {
-  let result = await repo.createUser(userData);
-  return result;
-};
-
-const loginUser = async (
-  repo: BookRepository,
-  userData: {
-    login: string;
-    password: string;
-  },
-) => {
-  let result = await repo.loginUser(userData);
-  return result;
-};
-
 export const useCases = {
   getBooks,
   getBookById,
@@ -101,6 +76,4 @@ export const useCases = {
   deleteAllBooks,
   createBook,
   updateBook,
-  createUser,
-  loginUser,
 };

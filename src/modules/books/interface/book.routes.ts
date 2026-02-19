@@ -101,22 +101,4 @@ export const getBookRouter = (
     },
   );
   //USER
-
-  router.post(
-    '/user/register',
-    //middleware for login body - email and password u know,
-    async (req: RequestWithBody<any>, res: Response<{ message: string }>) => {
-      let result = await useCases.createUser(bookRepositoryMongo, req.body);
-      return res.status(HTTP_STATUSES.OK_200).json({ message: result });
-    },
-  );
-  router.post(
-    '/user/login',
-    //also middleware for email and password,
-    async (req: RequestWithBody<any>, res: Response<{ message: string }>) => {
-      let result = await useCases.loginUser(bookRepositoryMongo, req.body);
-
-      return res.status(HTTP_STATUSES.OK_200).json({ message: result });
-    },
-  );
 };
