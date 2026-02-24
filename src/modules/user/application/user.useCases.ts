@@ -1,4 +1,7 @@
+import { errors } from '../../../shared/errors.js';
+import type { TokenService } from '../domain/token.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
+import type { User } from '../user.types.js';
 
 const createUser = async (
   repo: UserRepository,
@@ -7,9 +10,13 @@ const createUser = async (
     login: string;
     password: string;
   },
-) => {
-  let result = await repo.createUser(userData);
-  return result;
+  // tokenService: TokenService,
+): Promise<string> => {
+  const result = await repo.createUser(userData);
+  if (!result) {
+    throw new errors.AppError(400, 'couldnt create user');
+  }
+  return 'user succesfull created';
 };
 
 const loginUser = async (
@@ -18,8 +25,12 @@ const loginUser = async (
     login: string;
     password: string;
   },
-) => {
+): Promise<User> => {
   let result = await repo.loginUser(userData);
+  if (!result) {
+    throw new errors.AppError(404, 'user not found');
+  }
+
   return result;
 };
 

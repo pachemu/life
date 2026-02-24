@@ -4,8 +4,8 @@ import cors from 'cors';
 import { getBookRouter } from './modules/books/interface/book.routes.js';
 import { bookRepositoryMongo } from './modules/books/infrastructure/book.mongo.repository.js';
 import { AppError } from './shared/errors.js';
-import { getUserRouter } from './modules/user/interface/book.routes.js';
 import { UserRepositoryMongo } from './modules/user/infrastructure/user.mongo.repository.js';
+import { getUserRouter } from './modules/user/interface/user.routes.js';
 
 export const app = express();
 
@@ -17,6 +17,9 @@ getUserRouter(userRouter, UserRepositoryMongo);
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/books', booksRouter);
+app.use('/user', userRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {

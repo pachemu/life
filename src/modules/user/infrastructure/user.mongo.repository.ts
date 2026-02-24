@@ -4,11 +4,12 @@ import type {
   LoginUserInput,
 } from '../domain/user.repository.js';
 import * as bcrypt from 'bcrypt';
+import type { User } from '../user.types.js';
 
 const USER_COLLECTION = 'user';
 const getUserCollection = () => getDb<any>(USER_COLLECTION);
 
-const createUser = async (userData: CreateUserInput): Promise<string> => {
+const createUser = async (userData: CreateUserInput): Promise<User> => {
   const collection = getUserCollection();
   type UserData = {
     date: string;
@@ -27,20 +28,28 @@ const createUser = async (userData: CreateUserInput): Promise<string> => {
     email: userData.email,
   };
   let result = await collection.insertOne(user);
-
-  return `${result.acknowledged}`;
+  let newUser = {
+    email: user.email,
+    login: user.login,
+    userId: String(result.insertedId),
+  }; // надо потм в маппер
+  return newUser;
 };
 
-const loginUser = async (userData: LoginUserInput): Promise<string> => {
+const loginUser = async (userData: LoginUserInput): Promise<null | User> => {
   const collection = getUserCollection();
   let user = await collection.findOne({
     login: { $regex: userData.login, $options: 'i' },
   });
-  if (!user) return 'user not found';
-  console.log(userData.password, user.password);
+  if (!user) return null;
   const match = await bcrypt.compare(userData.password, user.password);
-  console.log('match', match);
-  return match ? 'successfull' : 'not a correct password';
+  user = {
+    userId: String(user._id),
+    email: user.email,
+    login: user.login,
+  }; // надо потм в маппер
+
+  return match ? user : null; // возвращаю юзердату т.к. лень делать маппер
 };
 
 export const UserRepositoryMongo = {
