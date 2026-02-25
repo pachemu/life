@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { ENV } from '../../../shared/env.js';
 import type { TokenPayload, TokenService } from '../domain/token.service.js';
 
-const SECRET = ENV.secretToken || 'gus';
+const SECRET = ENV.secretToken;
 
 export const jwtTokenService: TokenService = {
   sign(payload) {
