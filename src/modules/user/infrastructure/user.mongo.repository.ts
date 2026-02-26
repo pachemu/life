@@ -4,10 +4,12 @@ import type {
   LoginUserInput,
 } from '../domain/user.repository.js';
 import * as bcrypt from 'bcrypt';
-import type { User } from '../user.types.js';
+import type { User, UserDbModel } from '../user.types.js';
+import { ObjectId } from 'mongodb';
+import { userMappers } from './user.mapper.js';
 
 const USER_COLLECTION = 'user';
-const getUserCollection = () => getDb<any>(USER_COLLECTION);
+const getUserCollection = () => getDb<UserDbModel>(USER_COLLECTION);
 
 const createUser = async (userData: CreateUserInput): Promise<User> => {
   const collection = getUserCollection();
@@ -27,7 +29,7 @@ const createUser = async (userData: CreateUserInput): Promise<User> => {
     login: userData.login,
     email: userData.email,
   };
-  let result = await collection.insertOne(user);
+  let result = await collection.insertOne(user as UserDbModel);
   let newUser = {
     email: user.email,
     login: user.login,
@@ -43,16 +45,33 @@ const loginUser = async (userData: LoginUserInput): Promise<null | User> => {
   });
   if (!user) return null;
   const match = await bcrypt.compare(userData.password, user.password);
-  user = {
+  let goodUser = {
     userId: String(user._id),
     email: user.email,
     login: user.login,
   }; // надо потм в маппер
 
-  return match ? user : null; // возвращаю юзердату т.к. лень делать маппер
+  return match ? goodUser : null; // возвращаю юзердату т.к. лень делать маппер
+};
+
+const getAllUsers = async (): Promise<User[]> => {
+  const collection = getUserCollection();
+  let users = await collection.find();
+  let foundUsers = users
+    .map((user) => userMappers.toDomainUser(user))
+    .toArray();
+  return foundUsers;
+};
+
+const deleteUser = async (userId: string): Promise<boolean> => {
+  const collection = getUserCollection();
+  let deletedUser = await collection.deleteOne({ _id: new ObjectId(userId) });
+  return deletedUser.deletedCount === 1;
 };
 
 export const UserRepositoryMongo = {
   createUser,
   loginUser,
+  getAllUsers,
+  deleteUser,
 };

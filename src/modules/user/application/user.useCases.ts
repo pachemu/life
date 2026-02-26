@@ -34,7 +34,22 @@ const loginUser = async (
   return result;
 };
 
+const getAllUsers = async (repo: UserRepository): Promise<User[]> => {
+  let result = await repo.getAllUsers();
+  return result;
+};
+
+const deleteUser = async (
+  repo: UserRepository,
+  userId: string,
+): Promise<boolean> => {
+  let result = await repo.deleteUser(userId);
+  return result;
+};
+
 export const useCases = {
   createUser,
   loginUser,
+  getAllUsers,
+  deleteUser,
 };

@@ -14,4 +14,6 @@ export type LoginUserInput = {
 export interface UserRepository {
   createUser(data: CreateUserInput): Promise<null | User>;
   loginUser(data: LoginUserInput): Promise<null | User>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(userId: string): Promise<boolean>;
 }
