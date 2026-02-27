@@ -22,7 +22,7 @@ export const getUserRouter = (
   router.post(
     '/register',
     middlewares.validationCreateUserMiddleware,
-    async (req: RequestWithBody<any>, res: Response<{ message: string }>) => {
+    async (req: RequestWithBody<any>, res: Response<{ message: User }>) => {
       const result = await useCases.createUser(userRepositoryMongo, req.body);
       return res.status(HTTP_STATUSES.OK_200).json({ message: result });
     },
@@ -41,9 +41,9 @@ export const getUserRouter = (
   router.get(
     '/users',
     //middleware,
-    async (req: Request, res: Response<User[]>) => {
+    async (req: Request, res: Response<{ message: User[] }>) => {
       const result = await useCases.getAllUsers(userRepositoryMongo);
-      return result;
+      return res.status(HTTP_STATUSES.OK_200).send({ message: result });
     },
   );
   router.delete(

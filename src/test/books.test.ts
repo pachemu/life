@@ -43,7 +43,7 @@ beforeAll(async () => {
 });
 
 describe('/books', () => {
-  it('should return 200 and correct array', async () => {
+  it('should return 200 and correct array of books', async () => {
     await request(app)
       .get('/books')
       .expect(HTTP_STATUSES.OK_200, { message: createdBooks });

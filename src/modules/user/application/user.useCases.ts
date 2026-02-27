@@ -11,12 +11,12 @@ const createUser = async (
     password: string;
   },
   // tokenService: TokenService,
-): Promise<string> => {
+): Promise<User> => {
   const result = await repo.createUser(userData);
   if (!result) {
     throw new errors.AppError(400, 'couldnt create user');
   }
-  return 'user succesfull created';
+  return result;
 };
 
 const loginUser = async (
