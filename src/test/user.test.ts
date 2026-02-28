@@ -50,4 +50,29 @@ describe('/user', () => {
       .get('/user/users')
       .expect(HTTP_STATUSES.OK_200, { message: users });
   });
+  it('should return 201 and created user', async () => {
+    const response = await request(app)
+      .post('/user/register')
+      .send(exampleUsers[0])
+      .expect(HTTP_STATUSES.CREATED_201);
+    expect(response.body.message).toEqual(
+      expect.objectContaining({
+        email: exampleUsers[0]?.email,
+        login: exampleUsers[0]?.login,
+        userId: expect.any(String),
+      }),
+    );
+  });
+  it('should return 200 and tokenId', async () => {
+    const res = await request(app).post('/user/login').send({
+      login: exampleUsers[0]?.login,
+      password: exampleUsers[0]?.password,
+    });
+    expect(res.body.message).toEqual(expect.any(String));
+  });
+  it('should return 200 and delete user', async () => {
+    await request(app)
+      .delete(`/user/delete/${users[0]?.userId}`)
+      .expect(HTTP_STATUSES.OK_200, { message: true });
+  });
 });

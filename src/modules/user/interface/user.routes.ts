@@ -24,18 +24,21 @@ export const getUserRouter = (
     middlewares.validationCreateUserMiddleware,
     async (req: RequestWithBody<any>, res: Response<{ message: User }>) => {
       const result = await useCases.createUser(userRepositoryMongo, req.body);
-      return res.status(HTTP_STATUSES.OK_200).json({ message: result });
+      return res.status(HTTP_STATUSES.CREATED_201).json({ message: result });
     },
   );
   router.post(
     '/login',
     middlewares.validationLoginUserMiddleware,
     // sharedMiddlewares.validationTokenMiddleware,  было для теста обработчика.
-    async (req: RequestWithBody<LoginUserInput>, res: Response<string>) => {
+    async (
+      req: RequestWithBody<LoginUserInput>,
+      res: Response<{ message: string }>,
+    ) => {
       const result = await useCases.loginUser(userRepositoryMongo, req.body);
       const token = jwtTokenService.sign(result);
 
-      return res.status(HTTP_STATUSES.OK_200).send(token);
+      return res.status(HTTP_STATUSES.OK_200).send({ message: token });
     },
   );
   router.get(
