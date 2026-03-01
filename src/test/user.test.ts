@@ -26,10 +26,22 @@ let exampleUsers: User[] = [
   {
     login: 'Mellstroy',
     email: 'kazinoDep12@gmail.com',
-    password: 'Arthur genius',
+    password: 'ArthurGenius',
   },
 ];
 
+let incorrectedUsers: User[] = [
+  {
+    login: 'A',
+    email: 'ZALUPA1488.',
+    password: '987456321',
+  },
+  {
+    login: 'Lay',
+    email: 'kazinoDep1mail.com',
+    password: 'Aeius',
+  },
+];
 beforeAll(async () => {
   await connectToDatabase('life');
   let foundUsers: UserDb[] = (await request(app).get('/user/users')).body
@@ -63,16 +75,52 @@ describe('/user', () => {
       }),
     );
   });
+  it('should return 400 and message validation failed', async () => {
+    const response = await request(app)
+      .post('/user/register')
+      .send(incorrectedUsers[0])
+      .expect(HTTP_STATUSES.BAD_REQUEST_400);
+    expect(response.body.message).toEqual('Validation failed');
+  });
   it('should return 200 and tokenId', async () => {
-    const res = await request(app).post('/user/login').send({
-      login: exampleUsers[0]?.login,
-      password: exampleUsers[0]?.password,
-    });
+    const res = await request(app)
+      .post('/user/login')
+      .send({
+        login: exampleUsers[0]?.login,
+        password: exampleUsers[0]?.password,
+      })
+      .expect(HTTP_STATUSES.OK_200);
     expect(res.body.message).toEqual(expect.any(String));
+  });
+  it('should return 401 and unathorized', async () => {
+    const res = await request(app)
+      .post('/user/login')
+      .send({
+        login: exampleUsers[0]?.login,
+        password: exampleUsers[1]?.password,
+      })
+      .expect(HTTP_STATUSES.UNATHORIZED_401);
+    expect(res.body.message).toEqual('Unathorized');
+  });
+  it('should return 400 and validation failed', async () => {
+    const res = await request(app)
+      .post('/user/login')
+      .send({
+        login: incorrectedUsers[0]?.login,
+        password: incorrectedUsers[1]?.password,
+      })
+      .expect(HTTP_STATUSES.BAD_REQUEST_400);
+    expect(res.body.message).toEqual('Validation failed');
   });
   it('should return 200 and delete user', async () => {
     await request(app)
       .delete(`/user/delete/${users[0]?.userId}`)
       .expect(HTTP_STATUSES.OK_200, { message: true });
+  });
+  it('should return 400 and validation failed', async () => {
+    const response = await request(app)
+      .delete(`/user/delete/$123`)
+      .expect(HTTP_STATUSES.BAD_REQUEST_400);
+    expect(response.body.message).toEqual('Validation failed');
   });
 });

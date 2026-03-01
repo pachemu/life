@@ -51,6 +51,7 @@ export const getUserRouter = (
   );
   router.delete(
     '/delete/:id',
+    middlewares.validationIdUserMiddleware,
     async (
       req: RequestWithParams<DeleteModel>,
       res: Response<{ message: boolean }>,

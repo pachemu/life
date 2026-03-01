@@ -28,7 +28,7 @@ const loginUser = async (
 ): Promise<User> => {
   let result = await repo.loginUser(userData);
   if (!result) {
-    throw new errors.AppError(404, 'user not found');
+    throw new errors.AppError(401, 'Unathorized');
   }
 
   return result;
