@@ -1,5 +1,5 @@
 import { errors } from '../../../shared/errors.js';
-import type { TokenService } from '../domain/token.service.js';
+import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
 import type { User } from '../user.types.js';
 
@@ -10,12 +10,13 @@ const createUser = async (
     login: string;
     password: string;
   },
-  // tokenService: TokenService,
+  emailService: EmailSender,
 ): Promise<User> => {
   const result = await repo.createUser(userData);
   if (!result) {
     throw new errors.AppError(400, 'couldnt create user');
   }
+  await emailService.sendEmail('Hello, my dear friend', userData.email);
   return result;
 };
 

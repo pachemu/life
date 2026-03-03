@@ -14,6 +14,7 @@ import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
 import { sharedMiddlewares } from '../../../shared/middlewares.js';
 import type { User } from '../user.types.js';
+import { emailRepository } from '../infrastructure/adapters/Email.repository.js';
 
 export const getUserRouter = (
   router: Router,
@@ -23,7 +24,11 @@ export const getUserRouter = (
     '/register',
     middlewares.validationCreateUserMiddleware,
     async (req: RequestWithBody<any>, res: Response<{ message: User }>) => {
-      const result = await useCases.createUser(userRepositoryMongo, req.body);
+      const result = await useCases.createUser(
+        userRepositoryMongo,
+        req.body,
+        emailRepository,
+      );
       return res.status(HTTP_STATUSES.CREATED_201).json({ message: result });
     },
   );
