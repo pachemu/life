@@ -6,14 +6,20 @@ import { bookRepositoryMongo } from './modules/books/infrastructure/book.mongo.r
 import { AppError } from './shared/errors.js';
 import { UserRepositoryMongo } from './modules/user/infrastructure/user.mongo.repository.js';
 import { getUserRouter } from './modules/user/interface/user.routes.js';
+import { emailRepository } from './modules/user/infrastructure/adapters/Email.repository.js';
 
 export const app = express();
 
+const emailSender =
+  process.env.NODE_ENV === 'test'
+    ? { sendEmail: async () => {} }
+    : emailRepository;
+// пока так, мб потом перезакину
 const booksRouter = Router();
 const userRouter = Router();
 
 getBookRouter(booksRouter, bookRepositoryMongo);
-getUserRouter(userRouter, UserRepositoryMongo);
+getUserRouter(userRouter, UserRepositoryMongo, emailSender);
 
 app.use(cors());
 app.use(express.json());

@@ -12,13 +12,13 @@ import type {
 } from '../../../shared/routes.types.js';
 import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
-import { sharedMiddlewares } from '../../../shared/middlewares.js';
 import type { User } from '../user.types.js';
-import { emailRepository } from '../infrastructure/adapters/Email.repository.js';
+import type { EmailSender } from '../domain/email.service.js';
 
 export const getUserRouter = (
   router: Router,
   userRepositoryMongo: UserRepository,
+  EmailSender: EmailSender,
 ) => {
   router.post(
     '/register',
@@ -27,7 +27,7 @@ export const getUserRouter = (
       const result = await useCases.createUser(
         userRepositoryMongo,
         req.body,
-        emailRepository,
+        EmailSender,
       );
       return res.status(HTTP_STATUSES.CREATED_201).json({ message: result });
     },
