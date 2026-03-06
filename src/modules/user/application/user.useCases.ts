@@ -1,3 +1,5 @@
+import { add } from 'date-fns/add';
+import { v4 as uuidv4 } from 'uuid';
 import { errors } from '../../../shared/errors.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
@@ -12,12 +14,36 @@ const createUser = async (
   },
   emailService: EmailSender,
 ): Promise<User> => {
-  const result = await repo.createUser(userData);
+  const code = uuidv4();
+  const userToCreate = {
+    ...userData,
+    confirmationCode: code,
+    expirationCodeTime: add(new Date(), {
+      hours: 1,
+    }), // Надо создание кода перенести в отдельный Code Generator
+  };
+  const result = await repo.createUser(userToCreate);
   if (!result) {
     throw new errors.AppError(400, 'couldnt create user');
   }
-  await emailService.sendEmail('Hello, my dear friend', userData.email);
+  await emailService.sendEmail(
+    `Your verification code: ${userToCreate.confirmationCode}.
+    Link for verification : 
+    http://localhost:3000/user/verify?code=${userToCreate.confirmationCode}&email=${userToCreate.email}`,
+    userData.email,
+  );
   return result;
+};
+
+const verifyUser = async (
+  repo: UserRepository,
+  code: string,
+): Promise<boolean> => {
+  const user = await repo.confirmUser(code);
+  if (!user) {
+    throw new errors.AppError(400, 'Not expected code'); // построить норм код
+  }
+  return user;
 };
 
 const loginUser = async (
@@ -53,4 +79,5 @@ export const useCases = {
   loginUser,
   getAllUsers,
   deleteUser,
+  verifyUser,
 };

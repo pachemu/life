@@ -2,6 +2,7 @@ import type { Router, Response, Request } from 'express';
 import type {
   LoginUserInput,
   UserRepository,
+  VerifyUserInput,
 } from '../domain/user.repository.js';
 import { useCases } from '../application/user.useCases.js';
 import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
@@ -44,6 +45,26 @@ export const getUserRouter = (
       const token = jwtTokenService.sign(result);
 
       return res.status(HTTP_STATUSES.OK_200).send({ message: token });
+    },
+  );
+  router.get(
+    '/verify',
+    // нужно вставить middleware, чтобы не делать raw и etc.
+    async (
+      req: RequestWithBody<VerifyUserInput>,
+      res: Response<{ message: boolean }>,
+    ) => {
+      const raw = req.query.code;
+      const code = Array.isArray(raw) ? raw[0] : raw;
+
+      if (typeof code !== 'string' || !code) {
+        return res
+          .status(HTTP_STATUSES.BAD_REQUEST_400)
+          .json({ message: false });
+      }
+
+      const result = await useCases.verifyUser(userRepositoryMongo, code);
+      return res.status(HTTP_STATUSES.OK_200).send({ message: result });
     },
   );
   router.get(

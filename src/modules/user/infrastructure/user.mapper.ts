@@ -5,6 +5,9 @@ const toDomainUser = (userData: UserDbModel): User => {
     login: userData.login,
     email: userData.email,
     userId: String(userData._id),
+    confirmationCode: userData.confirmationCode,
+    expirationCodeTime: userData.expirationCodeTime,
+    isConfirmed: userData.isConfirmed,
   };
   return user;
 };
