@@ -4,6 +4,19 @@ import { errors } from '../../../shared/errors.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
 import type { User } from '../user.types.js';
+import type {
+  AccessToken,
+  RefreshToken,
+  TokenPayload,
+  TokenService,
+} from '../domain/token.service.js';
+import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
+
+type responseLogin = {
+  AccessToken: AccessToken;
+  RefreshToken: RefreshToken;
+  User: User;
+};
 
 const createUser = async (
   repo: UserRepository,
@@ -26,24 +39,19 @@ const createUser = async (
   if (!result) {
     throw new errors.AppError(400, 'couldnt create user');
   }
-  await emailService.sendEmail(
-    `Your verification code: ${userToCreate.confirmationCode}.
+  try {
+    await emailService.sendEmail(
+      `Your verification code: ${userToCreate.confirmationCode}.
     Link for verification : 
     http://localhost:3000/user/verify?code=${userToCreate.confirmationCode}&email=${userToCreate.email}`,
-    userData.email,
-  );
-  return result;
-};
-
-const verifyUser = async (
-  repo: UserRepository,
-  code: string,
-): Promise<boolean> => {
-  const user = await repo.confirmUser(code);
-  if (!user) {
-    throw new errors.AppError(400, 'Not expected code'); // построить норм код
+      userData.email,
+    );
+  } catch (e) {
+    await repo.deleteUser(result.userId);
+    throw new errors.AppError(500, 'Email not sent');
   }
-  return user;
+
+  return result;
 };
 
 const loginUser = async (
@@ -52,13 +60,19 @@ const loginUser = async (
     login: string;
     password: string;
   },
-): Promise<User> => {
-  let result = await repo.loginUser(userData);
-  if (!result) {
+  tokenService: TokenService,
+): Promise<responseLogin> => {
+  let user = await repo.loginUser(userData);
+  if (!user) {
     throw new errors.AppError(401, 'Unathorized');
   }
-
-  return result;
+  const accessToken = tokenService.signAccess(user);
+  const refreshToken = tokenService.signRefresh(user);
+  return {
+    AccessToken: accessToken,
+    RefreshToken: refreshToken,
+    User: user,
+  };
 };
 
 const getAllUsers = async (repo: UserRepository): Promise<User[]> => {
@@ -74,10 +88,62 @@ const deleteUser = async (
   return result;
 };
 
+const verifyUser = async (
+  repo: UserRepository,
+  code: string,
+): Promise<boolean> => {
+  const user = await repo.findByVerificationCode(code);
+  if (!user) return false;
+
+  if (user.confirmationCode !== code) return false;
+  if (user.expirationCodeTime.getTime() < Date.now()) return false;
+  const result = await repo.confirmUser(user.userId);
+  if (!result) {
+    throw new errors.AppError(
+      HTTP_STATUSES.UNATHORIZED_401,
+      'couldnt confirm user',
+    );
+  }
+  return result;
+};
+
+const refreshTokens = async (
+  tokenService: TokenService,
+  refreshToken: string | undefined,
+) => {
+  if (!refreshToken) {
+    throw new errors.AppError(
+      HTTP_STATUSES.UNATHORIZED_401,
+      'check your refresh token',
+    );
+  }
+
+  let payload: TokenPayload;
+  try {
+    payload = tokenService.verifyRefresh(refreshToken);
+    payload = {
+      userId: payload.userId,
+      email: payload.email,
+      login: payload.login,
+    }; // т.к. первый пейлоад хранит данные о времени истечения.
+  } catch {
+    throw new errors.AppError(
+      HTTP_STATUSES.UNATHORIZED_401,
+      'invalid refresh token',
+    );
+  }
+
+  const accessToken = tokenService.signAccess(payload);
+  const newRefreshToken = tokenService.signRefresh(payload);
+
+  return { AccessToken: accessToken, RefreshToken: newRefreshToken };
+};
+
 export const useCases = {
   createUser,
   loginUser,
   getAllUsers,
   deleteUser,
   verifyUser,
+  refreshTokens,
 };

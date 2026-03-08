@@ -24,5 +24,5 @@ export interface UserRepository {
   getAllUsers(): Promise<User[]>;
   deleteUser(userId: string): Promise<boolean>;
   findByVerificationCode(code: string): Promise<User | null>;
-  confirmUser(code: string): Promise<boolean | null>;
+  confirmUser(userId: string): Promise<boolean | null>;
 }

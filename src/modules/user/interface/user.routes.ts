@@ -15,6 +15,7 @@ import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
 import type { User } from '../user.types.js';
 import type { EmailSender } from '../domain/email.service.js';
+import type { AccessToken } from '../domain/token.service.js';
 
 export const getUserRouter = (
   router: Router,
@@ -41,10 +42,48 @@ export const getUserRouter = (
       req: RequestWithBody<LoginUserInput>,
       res: Response<{ message: string }>,
     ) => {
-      const result = await useCases.loginUser(userRepositoryMongo, req.body);
-      const token = jwtTokenService.sign(result);
+      const authResult = await useCases.loginUser(
+        userRepositoryMongo,
+        req.body,
+        jwtTokenService,
+      );
 
-      return res.status(HTTP_STATUSES.OK_200).send({ message: token });
+      const AccessToken = authResult.AccessToken;
+      const RefreshToken = authResult.RefreshToken;
+
+      return res
+        .status(HTTP_STATUSES.OK_200)
+        .cookie('refreshToken', RefreshToken, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: false,
+          path: '/user/refresh',
+        })
+        .send({ message: AccessToken });
+    },
+  );
+  router.post(
+    '/refresh',
+    async (
+      req: RequestWithBody<any>,
+      res: Response<{ message: AccessToken }>,
+    ) => {
+      const authTokens = await useCases.refreshTokens(
+        jwtTokenService,
+        req.cookies?.refreshToken,
+      );
+
+      const AccessToken = authTokens.AccessToken;
+      const RefreshToken = authTokens.RefreshToken;
+      return res
+        .status(HTTP_STATUSES.OK_200)
+        .cookie('refreshToken', RefreshToken, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: false,
+          path: '/user/refresh',
+        })
+        .send({ message: AccessToken });
     },
   );
   router.get(

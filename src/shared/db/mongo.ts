@@ -2,7 +2,7 @@ import { Collection, Db, MongoClient } from 'mongodb';
 import type { Document } from 'mongodb';
 import { ENV } from '../env.js';
 
-const URL = ENV.mongoUrl || 'mongodb://localhost:27017';
+const URL = ENV.MONGO_URL || 'mongodb://localhost:27017';
 let client: MongoClient = new MongoClient(URL);
 let db: Db | null;
 

@@ -4,8 +4,9 @@ import * as z from 'zod';
 import { ENV } from './env.js';
 import { HTTP_STATUSES } from './HTTP_STATUSES.js';
 import { errors } from './errors.js';
+import type { TokenService } from '../modules/user/domain/token.service.js'; // incorrect import, cause DDD dont provide this sh*t
 
-const SECRET = ENV.secretToken;
+const SECRET = ENV.ACCESS_TOKEN_SECRET;
 
 type MiddlewareFunction = (
   req: Request,
@@ -52,27 +53,27 @@ const authSchema = z.object({
 //     };
 
 const validationTokenMiddleware =
-  (): MiddlewareFunction => (req: Request, res: Response, next) => {
-    const token = req.headers.authorization;
-    const parsed = authSchema.safeParse({ authorization: token });
-    if (!parsed.success || !token) {
+  (TokenService: TokenService): MiddlewareFunction =>
+  (req: Request, res: Response, next) => {
+    const auth = req.headers.authorization;
+    const parsed = authSchema.safeParse({ authorization: auth });
+    if (!parsed.success || !auth) {
       return res
         .status(HTTP_STATUSES.UNATHORIZED_401)
-        .json({ messsage: 'Invalid auth header' });
+        .json({ message: 'Invalid auth header' });
     }
-    const jwtToken = token.slice(7);
+    const jwtToken = auth.slice(7); // bearer
     try {
-      const payload = jwt.verify(jwtToken, SECRET); // дубликация кода, мб можно перемести в jwtTokenService или как-то в общую папку, но не охота, не щас
+      const payload = TokenService.verifyAccess(jwtToken);
       (req as any).user = payload;
       next();
     } catch (e) {
-      throw new errors.AppError(
-        HTTP_STATUSES.UNATHORIZED_401,
-        'bad token, try to change to Bearer',
-      ); // поменять месседж на норм
+      res
+        .status(HTTP_STATUSES.UNATHORIZED_401)
+        .json({ message: 'Invalid token' });
     }
   };
 
 export const sharedMiddlewares = {
-  validationTokenMiddleware: validationTokenMiddleware(),
+  validationTokenMiddleware: validationTokenMiddleware,
 };

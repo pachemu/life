@@ -78,27 +78,37 @@ const findByVerificationCode = async (code: string): Promise<User | null> => {
   return foundUser;
 };
 
-const confirmUser = async (code: string): Promise<boolean | null> => {
+// const confirmUser = async (userId: string): Promise<boolean> => {
+//   const collection = getUserCollection();
+//   const user = await findByVerificationCode(code);
+//   const res = await collection.updateOne(
+//     {
+//       _id: new ObjectId(user.userId),
+//     },
+//     {
+//       $set: { isConfirmed: true },
+//       $unset: { confirmationCode: '', expirationCodeTime: '' },
+//     },
+//   );
+//   if (!user) return false;
+
+//   if (user.confirmationCode !== code) return false;
+
+//   const now = Date.now();
+//   const expiresAt = user.expirationCodeTime.getTime();
+
+//   if (expiresAt < now) return false;
+//   return res.modifiedCount === 1;
+// };
+const confirmUser = async (userId: string): Promise<boolean> => {
   const collection = getUserCollection();
-  const user = await findByVerificationCode(code);
-  if (!user) return null;
   const res = await collection.updateOne(
-    {
-      _id: new ObjectId(user.userId),
-    },
+    { _id: new ObjectId(userId) },
     {
       $set: { isConfirmed: true },
       $unset: { confirmationCode: '', expirationCodeTime: '' },
     },
   );
-  if (!user) return false;
-
-  if (user.confirmationCode !== code) return false;
-
-  const now = Date.now();
-  const expiresAt = user.expirationCodeTime.getTime();
-
-  if (expiresAt < now) return false;
   return res.modifiedCount === 1;
 };
 export const UserRepositoryMongo = {

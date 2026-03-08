@@ -4,6 +4,10 @@ export type TokenPayload = {
   userId: string;
 };
 export interface TokenService {
-  sign(payload: TokenPayload): string;
-  verify(token: string): TokenPayload;
+  signAccess(payload: TokenPayload): string;
+  verifyAccess(token: string): TokenPayload;
+  signRefresh(payload: TokenPayload): string;
+  verifyRefresh(token: string): TokenPayload;
 }
+export type AccessToken = string;
+export type RefreshToken = string;
