@@ -69,6 +69,7 @@ export const getUserRouter = (
       res: Response<{ message: AccessToken }>,
     ) => {
       const authTokens = await useCases.refreshTokens(
+        userRepositoryMongo,
         jwtTokenService,
         req.cookies?.refreshToken,
       );
@@ -125,6 +126,19 @@ export const getUserRouter = (
         userRepositoryMongo,
         req.params.id,
       );
+      return res.status(HTTP_STATUSES.OK_200).send({ message: result });
+    },
+  );
+  router.post(
+    '/logout',
+    //middleware,
+    async (req: RequestWithBody<any>, res: Response<{ message: boolean }>) => {
+      const result = await useCases.logoutUser(
+        userRepositoryMongo,
+        jwtTokenService,
+        req.cookies?.refreshToken,
+      );
+      res.clearCookie('refreshToken', { path: '/user/refresh' });
       return res.status(HTTP_STATUSES.OK_200).send({ message: result });
     },
   );

@@ -7,6 +7,7 @@ export type User = {
   isConfirmed: boolean;
   confirmationCode: string;
   expirationCodeTime: Date;
+  refreshTokenHash?: string | null;
 };
 
 export type UserDbModel = {
@@ -18,6 +19,7 @@ export type UserDbModel = {
   isConfirmed: boolean;
   confirmationCode: string;
   expirationCodeTime: Date;
+  refreshTokenHash?: string | null;
 };
 
 export type UserData = {
@@ -28,4 +30,5 @@ export type UserData = {
   isConfirmed: boolean;
   confirmationCode: string;
   expirationCodeTime: Date;
+  refreshTokenHash?: string | null;
 };

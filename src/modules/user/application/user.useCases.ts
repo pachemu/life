@@ -1,5 +1,6 @@
 import { add } from 'date-fns/add';
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'crypto';
 import { errors } from '../../../shared/errors.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
@@ -17,6 +18,13 @@ type responseLogin = {
   RefreshToken: RefreshToken;
   User: User;
 };
+type userData = {
+  login: string;
+  password: string;
+};
+
+const hashToken = (token: string) =>
+  createHash('sha256').update(token).digest('hex');
 
 const createUser = async (
   repo: UserRepository,
@@ -56,18 +64,20 @@ const createUser = async (
 
 const loginUser = async (
   repo: UserRepository,
-  userData: {
-    login: string;
-    password: string;
-  },
+  userData: userData,
   tokenService: TokenService,
 ): Promise<responseLogin> => {
   let user = await repo.loginUser(userData);
-  if (!user) {
+  if (!user || !user.isConfirmed) {
     throw new errors.AppError(401, 'Unathorized');
   }
   const accessToken = tokenService.signAccess(user);
   const refreshToken = tokenService.signRefresh(user);
+  const refreshHash = hashToken(refreshToken);
+  const updated = await repo.updateRefreshToken(user.userId, refreshHash);
+  if (!updated) {
+    throw new errors.AppError(500, 'couldnt save refresh token');
+  }
   return {
     AccessToken: accessToken,
     RefreshToken: refreshToken,
@@ -108,6 +118,7 @@ const verifyUser = async (
 };
 
 const refreshTokens = async (
+  repo: UserRepository,
   tokenService: TokenService,
   refreshToken: string | undefined,
 ) => {
@@ -133,12 +144,53 @@ const refreshTokens = async (
     );
   }
 
+  const user = await repo.findById(payload.userId);
+  if (!user || !user.refreshTokenHash) {
+    throw new errors.AppError(
+      HTTP_STATUSES.UNATHORIZED_401,
+      'invalid refresh token',
+    );
+  }
+  const incomingHash = hashToken(refreshToken);
+  if (incomingHash !== user.refreshTokenHash) {
+    throw new errors.AppError(
+      HTTP_STATUSES.UNATHORIZED_401,
+      'invalid refresh token',
+    );
+  }
+
   const accessToken = tokenService.signAccess(payload);
   const newRefreshToken = tokenService.signRefresh(payload);
+  const newHash = hashToken(newRefreshToken);
+  const saved = await repo.updateRefreshToken(user.userId, newHash);
+  if (!saved) {
+    throw new errors.AppError(500, 'couldnt rotate refresh token');
+  }
 
   return { AccessToken: accessToken, RefreshToken: newRefreshToken };
 };
+const logoutUser = async (
+  repo: UserRepository,
+  tokenService: TokenService,
+  refreshToken: RefreshToken | undefined,
+): Promise<boolean> => {
+  if (!refreshToken) {
+    throw new errors.AppError(401, 'No refresh token');
+  }
+  let payload: TokenPayload;
+  try {
+    payload = tokenService.verifyRefresh(refreshToken);
+    payload = {
+      userId: payload.userId,
+      email: payload.email,
+      login: payload.login,
+    };
+  } catch {
+    throw new errors.AppError(401, 'Invalid refresh token');
+  }
 
+  return await repo.updateRefreshToken(payload.userId, null);
+};
 export const useCases = {
   createUser,
   loginUser,
@@ -146,4 +198,5 @@ export const useCases = {
   deleteUser,
   verifyUser,
   refreshTokens,
+  logoutUser,
 };

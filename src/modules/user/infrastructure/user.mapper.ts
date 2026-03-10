@@ -8,6 +8,7 @@ const toDomainUser = (userData: UserDbModel): User => {
     confirmationCode: userData.confirmationCode,
     expirationCodeTime: userData.expirationCodeTime,
     isConfirmed: userData.isConfirmed,
+    refreshTokenHash: userData.refreshTokenHash ?? null,
   };
   return user;
 };

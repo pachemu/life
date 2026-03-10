@@ -15,30 +15,23 @@ const createUser = async (userData: CreateUserInput): Promise<User> => {
   const collection = getUserCollection();
 
   const salt = await bcrypt.genSalt(10);
-  const password = await bcrypt.hash(userData.password, salt);
+  const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-  const user: UserData = {
-    date: new Date().toString(),
-    password: password,
+  const userForInsert: Omit<UserDbModel, '_id'> = {
+    date: new Date().toISOString(),
+    password: hashedPassword,
     login: userData.login,
     email: userData.email,
     isConfirmed: false,
     confirmationCode: userData.confirmationCode,
     expirationCodeTime: userData.expirationCodeTime,
+    refreshTokenHash: null,
   };
-  let result = await collection.insertOne(user as UserDbModel);
-  let newUser = {
-    date: user.date,
-    password: user.password,
-    login: user.login,
-    email: user.email,
-    isConfirmed: user.isConfirmed,
-    confirmationCode: user.confirmationCode,
-    expirationCodeTime: user.expirationCodeTime,
+  let result = await collection.insertOne(userForInsert as UserDbModel);
+  return userMappers.toDomainUser({
     _id: result.insertedId,
-  }; // надо потм в маппер
-  let newNewUser = userMappers.toDomainUser(newUser); // ХАХАХАХ, НАДО ПОФИКСИТЬ, ЧЕТО Я ошибся
-  return newNewUser;
+    ...userForInsert,
+  });
 };
 
 const loginUser = async (userData: LoginUserInput): Promise<null | User> => {
@@ -68,6 +61,12 @@ const deleteUser = async (userId: string): Promise<boolean> => {
   return deletedUser.deletedCount === 1;
 };
 
+const findById = async (userId: string): Promise<User | null> => {
+  const collection = getUserCollection();
+  const user = await collection.findOne({ _id: new ObjectId(userId) });
+  return user ? userMappers.toDomainUser(user) : null;
+};
+
 const findByVerificationCode = async (code: string): Promise<User | null> => {
   const collection = getUserCollection();
   let user = await collection.findOne({
@@ -78,28 +77,6 @@ const findByVerificationCode = async (code: string): Promise<User | null> => {
   return foundUser;
 };
 
-// const confirmUser = async (userId: string): Promise<boolean> => {
-//   const collection = getUserCollection();
-//   const user = await findByVerificationCode(code);
-//   const res = await collection.updateOne(
-//     {
-//       _id: new ObjectId(user.userId),
-//     },
-//     {
-//       $set: { isConfirmed: true },
-//       $unset: { confirmationCode: '', expirationCodeTime: '' },
-//     },
-//   );
-//   if (!user) return false;
-
-//   if (user.confirmationCode !== code) return false;
-
-//   const now = Date.now();
-//   const expiresAt = user.expirationCodeTime.getTime();
-
-//   if (expiresAt < now) return false;
-//   return res.modifiedCount === 1;
-// };
 const confirmUser = async (userId: string): Promise<boolean> => {
   const collection = getUserCollection();
   const res = await collection.updateOne(
@@ -111,11 +88,25 @@ const confirmUser = async (userId: string): Promise<boolean> => {
   );
   return res.modifiedCount === 1;
 };
+
+const updateRefreshToken = async (
+  userId: string,
+  refreshTokenHash: string | null,
+): Promise<boolean> => {
+  const collection = getUserCollection();
+  const res = await collection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { refreshTokenHash } },
+  );
+  return res.modifiedCount === 1;
+};
 export const UserRepositoryMongo = {
   createUser,
   loginUser,
   getAllUsers,
   deleteUser,
+  findById,
   findByVerificationCode,
   confirmUser,
+  updateRefreshToken,
 };
