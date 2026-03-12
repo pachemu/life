@@ -37,7 +37,8 @@ const createUser = async (userData: CreateUserInput): Promise<User> => {
 const loginUser = async (userData: LoginUserInput): Promise<null | User> => {
   const collection = getUserCollection();
   let user = await collection.findOne({
-    login: { $regex: userData.login, $options: 'i' },
+    // login: { $regex: userData.login, $options: 'i' },
+    login: userData.login,
   });
   if (!user) return null;
   const match = await bcrypt.compare(userData.password, user.password);
@@ -70,7 +71,7 @@ const findById = async (userId: string): Promise<User | null> => {
 const findByVerificationCode = async (code: string): Promise<User | null> => {
   const collection = getUserCollection();
   let user = await collection.findOne({
-    confirmationCode: { $regex: code, $options: 'i' },
+    confirmationCode: code,
   });
   if (!user) return null;
   let foundUser = userMappers.toDomainUser(user);

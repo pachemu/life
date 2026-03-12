@@ -1,17 +1,20 @@
-import type { User, UserDbModel } from '../user.types.js';
+import type { User, UserDbModel, UserViewModel } from '../user.types.js';
 
-const toDomainUser = (userData: UserDbModel): User => {
-  let user: User = {
-    login: userData.login,
-    email: userData.email,
-    userId: String(userData._id),
-    confirmationCode: userData.confirmationCode,
-    expirationCodeTime: userData.expirationCodeTime,
-    isConfirmed: userData.isConfirmed,
-    refreshTokenHash: userData.refreshTokenHash ?? null,
-  };
-  return user;
-};
+const toDomainUser = (db: UserDbModel): User => ({
+  userId: String(db._id),
+  email: db.email,
+  login: db.login,
+  isConfirmed: db.isConfirmed,
+  confirmationCode: db.confirmationCode,
+  expirationCodeTime: db.expirationCodeTime,
+  refreshTokenHash: db.refreshTokenHash ?? null,
+});
+
+const toViewUser = (user: User): UserViewModel => ({
+  userId: user.userId,
+  email: user.email,
+  login: user.login,
+});
 
 const toCreateUser = (userData: any) => {
   let user = {
@@ -26,4 +29,5 @@ const toCreateUser = (userData: any) => {
 export let userMappers = {
   toCreateUser: toCreateUser,
   toDomainUser,
+  toViewUser,
 };

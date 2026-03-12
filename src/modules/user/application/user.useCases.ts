@@ -4,27 +4,31 @@ import { createHash } from 'crypto';
 import { errors } from '../../../shared/errors.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
-import type { User } from '../user.types.js';
+import type { responseLogin, User, userData } from '../user.types.js';
 import type {
-  AccessToken,
   RefreshToken,
   TokenPayload,
   TokenService,
 } from '../domain/token.service.js';
 import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
 
-type responseLogin = {
-  AccessToken: AccessToken;
-  RefreshToken: RefreshToken;
-  User: User;
-};
-type userData = {
-  login: string;
-  password: string;
+const getCleanPayload = (tokenService: TokenService, refreshToken: string) => {
+  const payload = tokenService.verifyRefresh(refreshToken);
+  return { userId: payload.userId, email: payload.email, login: payload.login };
 };
 
 const hashToken = (token: string) =>
   createHash('sha256').update(token).digest('hex');
+
+const assertRefreshMatches = (user: User, refreshToken: string) => {
+  if (!user.refreshTokenHash) {
+    throw new errors.AppError(401, 'Invalid refresh token');
+  }
+  const incomingHash = hashToken(refreshToken);
+  if (incomingHash !== user.refreshTokenHash) {
+    throw new errors.AppError(401, 'Invalid refresh token');
+  }
+};
 
 const createUser = async (
   repo: UserRepository,
@@ -71,8 +75,13 @@ const loginUser = async (
   if (!user || !user.isConfirmed) {
     throw new errors.AppError(401, 'Unathorized');
   }
-  const accessToken = tokenService.signAccess(user);
-  const refreshToken = tokenService.signRefresh(user);
+  const payload: TokenPayload = {
+    userId: user.userId,
+    email: user.email,
+    login: user.login,
+  };
+  const accessToken = tokenService.signAccess(payload);
+  const refreshToken = tokenService.signRefresh(payload);
   const refreshHash = hashToken(refreshToken);
   const updated = await repo.updateRefreshToken(user.userId, refreshHash);
   if (!updated) {
@@ -86,8 +95,7 @@ const loginUser = async (
 };
 
 const getAllUsers = async (repo: UserRepository): Promise<User[]> => {
-  let result = await repo.getAllUsers();
-  return result;
+  return await repo.getAllUsers();
 };
 
 const deleteUser = async (
@@ -103,10 +111,16 @@ const verifyUser = async (
   code: string,
 ): Promise<boolean> => {
   const user = await repo.findByVerificationCode(code);
-  if (!user) return false;
+  const expiredAt = user?.expirationCodeTime?.getTime();
+  const isInvalid =
+    !user ||
+    user.confirmationCode !== code ||
+    !expiredAt ||
+    expiredAt < Date.now();
 
-  if (user.confirmationCode !== code) return false;
-  if (user.expirationCodeTime.getTime() < Date.now()) return false;
+  if (isInvalid) {
+    throw new errors.AppError(400, 'Invalid or expired code');
+  }
   const result = await repo.confirmUser(user.userId);
   if (!result) {
     throw new errors.AppError(
@@ -131,33 +145,20 @@ const refreshTokens = async (
 
   let payload: TokenPayload;
   try {
-    payload = tokenService.verifyRefresh(refreshToken);
-    payload = {
-      userId: payload.userId,
-      email: payload.email,
-      login: payload.login,
-    }; // т.к. первый пейлоад хранит данные о времени истечения.
+    payload = getCleanPayload(tokenService, refreshToken);
   } catch {
     throw new errors.AppError(
       HTTP_STATUSES.UNATHORIZED_401,
       'invalid refresh token',
     );
   }
-
   const user = await repo.findById(payload.userId);
-  if (!user || !user.refreshTokenHash) {
-    throw new errors.AppError(
-      HTTP_STATUSES.UNATHORIZED_401,
-      'invalid refresh token',
-    );
+
+  if (!user) {
+    throw new errors.AppError(401, 'Invalid refresh token');
   }
-  const incomingHash = hashToken(refreshToken);
-  if (incomingHash !== user.refreshTokenHash) {
-    throw new errors.AppError(
-      HTTP_STATUSES.UNATHORIZED_401,
-      'invalid refresh token',
-    );
-  }
+
+  assertRefreshMatches(user, refreshToken);
 
   const accessToken = tokenService.signAccess(payload);
   const newRefreshToken = tokenService.signRefresh(payload);
@@ -179,15 +180,16 @@ const logoutUser = async (
   }
   let payload: TokenPayload;
   try {
-    payload = tokenService.verifyRefresh(refreshToken);
-    payload = {
-      userId: payload.userId,
-      email: payload.email,
-      login: payload.login,
-    };
+    payload = getCleanPayload(tokenService, refreshToken);
   } catch {
     throw new errors.AppError(401, 'Invalid refresh token');
   }
+  const user = await repo.findById(payload.userId);
+  if (!user) {
+    throw new errors.AppError(401, 'Invalid refresh token');
+  }
+
+  assertRefreshMatches(user, refreshToken);
 
   return await repo.updateRefreshToken(payload.userId, null);
 };

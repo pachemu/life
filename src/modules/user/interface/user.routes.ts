@@ -9,13 +9,20 @@ import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
 import type {
   DeleteModel,
   RequestWithBody,
+  RequestWithCookie,
   RequestWithParams,
+  RequestWithQuery,
 } from '../../../shared/routes.types.js';
 import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
-import type { User } from '../user.types.js';
+import type { User, UserViewModel } from '../user.types.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { AccessToken } from '../domain/token.service.js';
+const toViewUser = (user: User): UserViewModel => ({
+  userId: user.userId,
+  email: user.email,
+  login: user.login,
+});
 
 export const getUserRouter = (
   router: Router,
@@ -25,13 +32,18 @@ export const getUserRouter = (
   router.post(
     '/register',
     middlewares.validationCreateUserMiddleware,
-    async (req: RequestWithBody<any>, res: Response<{ message: User }>) => {
+    async (
+      req: RequestWithBody<any>,
+      res: Response<{ message: UserViewModel }>,
+    ) => {
       const result = await useCases.createUser(
         userRepositoryMongo,
         req.body,
         EmailSender,
       );
-      return res.status(HTTP_STATUSES.CREATED_201).json({ message: result });
+      return res
+        .status(HTTP_STATUSES.CREATED_201)
+        .json({ message: toViewUser(result) });
     },
   );
   router.post(
@@ -40,7 +52,7 @@ export const getUserRouter = (
     // sharedMiddlewares.validationTokenMiddleware,  было для теста обработчика.
     async (
       req: RequestWithBody<LoginUserInput>,
-      res: Response<{ message: string }>,
+      res: Response<{ message: object }>,
     ) => {
       const authResult = await useCases.loginUser(
         userRepositoryMongo,
@@ -51,6 +63,10 @@ export const getUserRouter = (
       const AccessToken = authResult.AccessToken;
       const RefreshToken = authResult.RefreshToken;
 
+      const response = {
+        token: AccessToken,
+        login: authResult.User.login,
+      };
       return res
         .status(HTTP_STATUSES.OK_200)
         .cookie('refreshToken', RefreshToken, {
@@ -59,13 +75,13 @@ export const getUserRouter = (
           secure: false,
           path: '/user/refresh',
         })
-        .send({ message: AccessToken });
+        .send({ message: response });
     },
   );
   router.post(
     '/refresh',
     async (
-      req: RequestWithBody<any>,
+      req: RequestWithCookie<{ refreshToken: string }>,
       res: Response<{ message: AccessToken }>,
     ) => {
       const authTokens = await useCases.refreshTokens(
@@ -91,7 +107,7 @@ export const getUserRouter = (
     '/verify',
     // нужно вставить middleware, чтобы не делать raw и etc.
     async (
-      req: RequestWithBody<VerifyUserInput>,
+      req: RequestWithQuery<VerifyUserInput>,
       res: Response<{ message: boolean }>,
     ) => {
       const raw = req.query.code;
@@ -110,9 +126,11 @@ export const getUserRouter = (
   router.get(
     '/users',
     //middleware,
-    async (req: Request, res: Response<{ message: User[] }>) => {
+    async (req: Request, res: Response<{ message: UserViewModel[] }>) => {
       const result = await useCases.getAllUsers(userRepositoryMongo);
-      return res.status(HTTP_STATUSES.OK_200).send({ message: result });
+      return res
+        .status(HTTP_STATUSES.OK_200)
+        .send({ message: result.map(toViewUser) });
     },
   );
   router.delete(
@@ -132,7 +150,10 @@ export const getUserRouter = (
   router.post(
     '/logout',
     //middleware,
-    async (req: RequestWithBody<any>, res: Response<{ message: boolean }>) => {
+    async (
+      req: RequestWithCookie<{ refreshToken: string }>,
+      res: Response<{ message: boolean }>,
+    ) => {
       const result = await useCases.logoutUser(
         userRepositoryMongo,
         jwtTokenService,
