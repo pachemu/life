@@ -15,14 +15,10 @@ import type {
 } from '../../../shared/routes.types.js';
 import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
-import type { User, UserViewModel } from '../user.types.js';
+import type { UserViewModel } from '../user.types.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { AccessToken } from '../domain/token.service.js';
-const toViewUser = (user: User): UserViewModel => ({
-  userId: user.userId,
-  email: user.email,
-  login: user.login,
-});
+import { userMappers } from '../infrastructure/user.mapper.js';
 
 export const getUserRouter = (
   router: Router,
@@ -43,7 +39,7 @@ export const getUserRouter = (
       );
       return res
         .status(HTTP_STATUSES.CREATED_201)
-        .json({ message: toViewUser(result) });
+        .json({ message: userMappers.toViewUser(result) });
     },
   );
   router.post(
@@ -73,7 +69,7 @@ export const getUserRouter = (
           httpOnly: true,
           sameSite: 'lax',
           secure: false,
-          path: '/user/refresh',
+          path: '/user',
         })
         .send({ message: response });
     },
@@ -98,13 +94,14 @@ export const getUserRouter = (
           httpOnly: true,
           sameSite: 'lax',
           secure: false,
-          path: '/user/refresh',
+          path: '/user',
         })
         .send({ message: AccessToken });
     },
   );
   router.get(
     '/verify',
+    middlewares.validationVerifyUserMiddleware,
     // нужно вставить middleware, чтобы не делать raw и etc.
     async (
       req: RequestWithQuery<VerifyUserInput>,
@@ -112,12 +109,6 @@ export const getUserRouter = (
     ) => {
       const raw = req.query.code;
       const code = Array.isArray(raw) ? raw[0] : raw;
-
-      if (typeof code !== 'string' || !code) {
-        return res
-          .status(HTTP_STATUSES.BAD_REQUEST_400)
-          .json({ message: false });
-      }
 
       const result = await useCases.verifyUser(userRepositoryMongo, code);
       return res.status(HTTP_STATUSES.OK_200).send({ message: result });
@@ -128,9 +119,8 @@ export const getUserRouter = (
     //middleware,
     async (req: Request, res: Response<{ message: UserViewModel[] }>) => {
       const result = await useCases.getAllUsers(userRepositoryMongo);
-      return res
-        .status(HTTP_STATUSES.OK_200)
-        .send({ message: result.map(toViewUser) });
+      const view = result.map(userMappers.toViewUser);
+      return res.status(HTTP_STATUSES.OK_200).send({ message: view });
     },
   );
   router.delete(

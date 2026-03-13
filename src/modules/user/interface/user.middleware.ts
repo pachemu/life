@@ -51,6 +51,14 @@ const userIdParamSchema = z.object({
   }),
 });
 
+const userVerifySchema = z.object({
+  query: z.object({
+    code: z.string().refine((val) => z.uuidv4(), {
+      message: 'invalid code format',
+    }),
+  }),
+});
+
 const validateInput: ValidateInput =
   (schema: z.ZodSchema): MiddlewareFunction =>
   (req: Request, res: Response, next) => {
@@ -79,4 +87,5 @@ export const middlewares = {
   validationUpdateUserMiddleware: validateInput(userUpdateSchema),
   validationIdUserMiddleware: validateInput(userIdParamSchema),
   validationLoginUserMiddleware: validateInput(userLoginSchema),
+  validationVerifyUserMiddleware: validateInput(userVerifySchema),
 };

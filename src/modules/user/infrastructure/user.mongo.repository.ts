@@ -87,7 +87,7 @@ const confirmUser = async (userId: string): Promise<boolean> => {
       $unset: { confirmationCode: '', expirationCodeTime: '' },
     },
   );
-  return res.modifiedCount === 1;
+  return res.matchedCount === 1;
 };
 
 const updateRefreshToken = async (
@@ -99,7 +99,7 @@ const updateRefreshToken = async (
     { _id: new ObjectId(userId) },
     { $set: { refreshTokenHash } },
   );
-  return res.modifiedCount === 1;
+  return res.matchedCount === 1;
 };
 export const UserRepositoryMongo = {
   createUser,
