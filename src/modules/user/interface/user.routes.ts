@@ -149,7 +149,7 @@ export const getUserRouter = (
         jwtTokenService,
         req.cookies?.refreshToken,
       );
-      res.clearCookie('refreshToken', { path: '/user/refresh' });
+      res.clearCookie('refreshToken', { path: '/user' });
       return res.status(HTTP_STATUSES.OK_200).send({ message: result });
     },
   );

@@ -49,7 +49,10 @@ const createUser = async (
   };
   const result = await repo.createUser(userToCreate);
   if (!result) {
-    throw new errors.AppError(400, 'couldnt create user');
+    throw new errors.AppError(
+      409,
+      'User with this email or login already registred',
+    );
   }
   try {
     await emailService.sendEmail(

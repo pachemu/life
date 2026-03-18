@@ -16,7 +16,16 @@ type ValidateInput = (
   }>,
 ) => MiddlewareFunction;
 
-const email = z.string().trim().min(3).max(50);
+const email = z
+  .string()
+  .trim()
+  .pipe(
+    z
+      .email('This is not a valid email')
+      .min(3, 'This email is too short')
+      .max(50, 'This email is too long'),
+  );
+
 const login = z.string().trim().min(3).max(30);
 const password = z.string().trim().min(4).max(30);
 
@@ -53,9 +62,7 @@ const userIdParamSchema = z.object({
 
 const userVerifySchema = z.object({
   query: z.object({
-    code: z.string().refine((val) => z.uuidv4(), {
-      message: 'invalid code format',
-    }),
+    code: z.string().trim().pipe(z.uuid('invalid code format')),
   }),
 });
 

@@ -8,8 +8,6 @@ const transporter = nodemailer.createTransport({
     user: ENV.GOOGLE_USER_GMAIL,
     pass: ENV.GOOGLE_APP_PASSWORD,
   },
-  logger: true,
-  debug: true,
 });
 
 const sendEmail = async (message: string, email: string) => {

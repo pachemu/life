@@ -5,13 +5,22 @@ import type {
 } from '../domain/user.repository.js';
 import * as bcrypt from 'bcrypt';
 import type { User, UserData, UserDbModel } from '../user.types.js';
-import { ObjectId } from 'mongodb';
+import { MongoServerError, ObjectId } from 'mongodb';
 import { userMappers } from './user.mapper.js';
+
+const ensureIndexes = async (): Promise<void> => {
+  const collection = getUserCollection();
+
+  await collection.createIndexes([
+    { key: { email: 1 }, unique: true },
+    { key: { login: 1 }, unique: true },
+  ]);
+};
 
 const USER_COLLECTION = 'user';
 const getUserCollection = () => getDb<UserDbModel>(USER_COLLECTION);
 
-const createUser = async (userData: CreateUserInput): Promise<User> => {
+const createUser = async (userData: CreateUserInput): Promise<User | null> => {
   const collection = getUserCollection();
 
   const salt = await bcrypt.genSalt(10);
@@ -27,11 +36,19 @@ const createUser = async (userData: CreateUserInput): Promise<User> => {
     expirationCodeTime: userData.expirationCodeTime,
     refreshTokenHash: null,
   };
-  let result = await collection.insertOne(userForInsert as UserDbModel);
-  return userMappers.toDomainUser({
-    _id: result.insertedId,
-    ...userForInsert,
-  });
+
+  try {
+    const result = await collection.insertOne(userForInsert as UserDbModel);
+    return userMappers.toDomainUser({
+      _id: result.insertedId,
+      ...userForInsert,
+    });
+  } catch (e) {
+    if (e instanceof MongoServerError && e.code === 11000) {
+      return null;
+    }
+    throw e;
+  }
 };
 
 const loginUser = async (userData: LoginUserInput): Promise<null | User> => {

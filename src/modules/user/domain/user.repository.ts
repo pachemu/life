@@ -15,7 +15,6 @@ export type LoginUserInput = {
 
 export type VerifyUserInput = {
   code: string;
-  email: string;
 };
 
 export interface UserRepository {
@@ -26,5 +25,8 @@ export interface UserRepository {
   findByVerificationCode(code: string): Promise<User | null>;
   confirmUser(userId: string): Promise<boolean | null>;
   findById(userId: string): Promise<User | null>;
-  updateRefreshToken(userId: string, refreshTokenHash: string | null): Promise<boolean>;
+  updateRefreshToken(
+    userId: string,
+    refreshTokenHash: string | null,
+  ): Promise<boolean>;
 }
