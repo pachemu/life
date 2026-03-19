@@ -11,6 +11,7 @@ import type {
   TokenService,
 } from '../domain/token.service.js';
 import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
+import { ENV } from '../../../shared/env.js';
 
 const getCleanPayload = (tokenService: TokenService, refreshToken: string) => {
   const payload = tokenService.verifyRefresh(refreshToken);
@@ -29,6 +30,8 @@ const assertRefreshMatches = (user: User, refreshToken: string) => {
     throw new errors.AppError(401, 'Invalid refresh token');
   }
 };
+
+const SERVER_URL = ENV.MONGO_URL;
 
 const createUser = async (
   repo: UserRepository,
@@ -58,7 +61,7 @@ const createUser = async (
     await emailService.sendEmail(
       `Your verification code: ${userToCreate.confirmationCode}.
     Link for verification : 
-    http://localhost:3000/user/verify?code=${userToCreate.confirmationCode}&email=${userToCreate.email}`,
+    ${SERVER_URL}/user/verify?code=${userToCreate.confirmationCode}&email=${userToCreate.email}`,
       userData.email,
     );
   } catch (e) {

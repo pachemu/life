@@ -19,6 +19,7 @@ type ValidateInput = (
 const email = z
   .string()
   .trim()
+  .toLowerCase()
   .pipe(
     z
       .email('This is not a valid email')
@@ -26,7 +27,7 @@ const email = z
       .max(50, 'This email is too long'),
   );
 
-const login = z.string().trim().min(3).max(30);
+const login = z.string().trim().toLowerCase().min(3).max(30);
 const password = z.string().trim().min(4).max(30);
 
 const userCreateSchema = z.object({

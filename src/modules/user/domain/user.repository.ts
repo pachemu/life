@@ -17,6 +17,12 @@ export type VerifyUserInput = {
   code: string;
 };
 
+export type RegisterUserInput = {
+  email: string;
+  login: string;
+  password: string;
+};
+
 export interface UserRepository {
   createUser(data: CreateUserInput): Promise<null | User>;
   loginUser(data: LoginUserInput): Promise<null | User>;

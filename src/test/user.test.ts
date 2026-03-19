@@ -139,8 +139,16 @@ describe('/user', () => {
     const res = await request(app)
       .get(`/user/verify?code=sdadweasds`)
       .expect(HTTP_STATUSES.BAD_REQUEST_400);
+    expect(res.body.message).toEqual('Validation failed');
+  });
+  it('should return 400 and invalid or expired code', async () => {
+    const res = await request(app)
+      .get('/user/verify?code=123e4567-e89b-12d3-a456-426614174000')
+      .expect(HTTP_STATUSES.BAD_REQUEST_400);
+
     expect(res.body.message).toEqual('Invalid or expired code');
   });
+
   it('should return 400 when code is missing', async () => {
     await request(app)
       .get('/user/verify')

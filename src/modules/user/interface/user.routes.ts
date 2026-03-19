@@ -1,6 +1,7 @@
 import type { Router, Response, Request } from 'express';
 import type {
   LoginUserInput,
+  RegisterUserInput,
   UserRepository,
   VerifyUserInput,
 } from '../domain/user.repository.js';
@@ -29,7 +30,7 @@ export const getUserRouter = (
     '/register',
     middlewares.validationCreateUserMiddleware,
     async (
-      req: RequestWithBody<any>,
+      req: RequestWithBody<RegisterUserInput>,
       res: Response<{ message: UserViewModel }>,
     ) => {
       const result = await useCases.createUser(
@@ -48,7 +49,12 @@ export const getUserRouter = (
     // sharedMiddlewares.validationTokenMiddleware,  было для теста обработчика.
     async (
       req: RequestWithBody<LoginUserInput>,
-      res: Response<{ message: object }>,
+      res: Response<{
+        message: {
+          token: string;
+          login: string;
+        };
+      }>,
     ) => {
       const authResult = await useCases.loginUser(
         userRepositoryMongo,
