@@ -13,10 +13,11 @@ import type {
   BookQuery,
 } from './book.routes.types.js';
 import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
-import { useCases } from '../application/book.useCases.js';
-import { middlewares } from './book.middlewares.js';
+import { middlewares } from './book.middleware.js';
 import type { BookRepository } from '../domain/book.repository.js';
 import bookToView from './book.mapper.js';
+import { useCases } from '../application/book.useCases.js';
+import { sharedMiddlewares } from '../../../shared/middlewares.js';
 
 export const getBookRouter = (
   router: Router,
@@ -25,6 +26,7 @@ export const getBookRouter = (
   // Query запросы
   router.get(
     '/',
+    sharedMiddlewares.validationTokenMiddleware,
     async (
       req: RequestWithQuery<BookQuery>,
       res: Response<{ message: BookViewModel[] }>,
@@ -36,6 +38,7 @@ export const getBookRouter = (
   );
   router.get(
     '/:id',
+    sharedMiddlewares.validationTokenMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
       req: RequestWithParams<GetBookModel>,
@@ -53,6 +56,7 @@ export const getBookRouter = (
 
   router.post(
     '/',
+    sharedMiddlewares.validationTokenMiddleware,
     middlewares.validationCreateBookMiddleware,
     async (
       req: RequestWithBody<PostBookModel>,
@@ -64,24 +68,26 @@ export const getBookRouter = (
     },
   );
 
-  (router.delete(
+  router.delete(
     '/:id',
+    sharedMiddlewares.validationTokenMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
       req: RequestWithParams<DeleteBookModel>,
       res: Response<{ message: boolean }>,
     ) => {
-      let result = await useCases.deleteBook(
+      const result = await useCases.deleteBook(
         bookRepositoryMongo,
         req.params.id,
       );
       return res.status(HTTP_STATUSES.OK_200).json({ message: result });
     },
-  ),
-    router.delete('/', async (_req, res: Response<{ message: boolean }>) => {
-      let result = await useCases.deleteAllBooks(bookRepositoryMongo);
-      return res.status(HTTP_STATUSES.OK_200).json({ message: result });
-    }));
+  );
+
+  router.delete('/', async (_req, res: Response<{ message: boolean }>) => {
+    const result = await useCases.deleteAllBooks(bookRepositoryMongo);
+    return res.status(HTTP_STATUSES.OK_200).json({ message: result });
+  });
 
   router.put(
     '/:id',
