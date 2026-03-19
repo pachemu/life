@@ -13,15 +13,18 @@ const COLLECTION = 'books';
 
 const getCollection = () => getDb<bookDbModel>(COLLECTION);
 
-const findAll = async (): Promise<Book[]> => {
+const findAll = async (ownerId: string): Promise<Book[]> => {
   const collection = getCollection();
-  let docs = await collection.find().toArray();
+  let docs = await collection.find({ ownerId }).toArray();
   return docs.map(bookMapper.toDomain);
 };
 
-const findByQuery = async (query: BookQuery): Promise<Book[]> => {
+const findByQuery = async (
+  ownerId: string,
+  query: BookQuery,
+): Promise<Book[]> => {
   const collection = getCollection();
-  const filter: any = {};
+  const filter: any = { ownerId };
   if (query.title) filter.title = { $regex: query.title, $options: 'i' };
   if (query.author) filter.author = { $regex: query.author, $options: 'i' };
   if (query.readPages !== undefined) filter.readPages = query.readPages;
@@ -31,48 +34,49 @@ const findByQuery = async (query: BookQuery): Promise<Book[]> => {
   return docs.map(bookMapper.toDomain);
 };
 
-const findById = async (id: string): Promise<Book | null> => {
+const findById = async (id: string, ownerId: string): Promise<Book | null> => {
   const collection = getCollection();
-  let docs = await collection.findOne({ _id: new ObjectId(id) });
+  let docs = await collection.findOne({ _id: new ObjectId(id), ownerId });
   return docs ? bookMapper.toDomain(docs) : null;
 };
 
-const create = async (dataBook: CreateBookInput): Promise<Book> => {
+const create = async (ownerId: string, dataBook: CreateBookInput): Promise<Book> => {
   const collection = getCollection();
-  const dbModel = bookMapper.toCreateDb(dataBook);
+  const dbModel = bookMapper.toCreateDb(ownerId, dataBook);
   const id = (await collection.insertOne(dbModel as bookDbModel)).insertedId;
-  const createdBook = await collection.findOne({ _id: id });
+  const createdBook = await collection.findOne({ _id: id, ownerId });
   if (!createdBook) {
     throw new Error('created book doesnt exist');
   }
   return await bookMapper.toDomain(createdBook);
 };
 
-const update = async (id: string, dataBook: UpdateBookInput): Promise<Book> => {
+const update = async (
+  id: string,
+  ownerId: string,
+  dataBook: UpdateBookInput,
+): Promise<Book> => {
   const collection = getCollection();
-  const result = await collection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: dataBook },
-  );
-  const updatedBook = await collection.findOne({ _id: new ObjectId(id) });
+  await collection.updateOne({ _id: new ObjectId(id), ownerId }, { $set: dataBook });
+  const updatedBook = await collection.findOne({ _id: new ObjectId(id), ownerId });
   if (!updatedBook) {
     throw new Error('created book doesnt exist');
   }
   return bookMapper.toDomain(updatedBook);
 };
 
-const deleteById = async (id: string): Promise<boolean> => {
+const deleteById = async (id: string, ownerId: string): Promise<boolean> => {
   const collection = getCollection();
-  let result = await collection.deleteOne({ _id: new ObjectId(id) });
+  let result = await collection.deleteOne({ _id: new ObjectId(id), ownerId });
   if (result.deletedCount !== 1) {
     throw new Error('book not found');
   }
   return true;
 };
 
-const deleteAllBooks = async (): Promise<boolean> => {
+const deleteAllBooks = async (ownerId: string): Promise<boolean> => {
   const collection = getCollection();
-  let result = await collection.deleteMany({});
+  let result = await collection.deleteMany({ ownerId });
   return result.acknowledged;
 };
 // user

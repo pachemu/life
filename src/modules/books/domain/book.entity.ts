@@ -10,6 +10,7 @@ type BookUpdate = {
 export class Book {
   constructor(
     public readonly id: string,
+    public readonly ownerId: string,
     public title: string,
     public author: string,
     public readPages: number,

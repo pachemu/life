@@ -22,6 +22,8 @@ type User = {
   password: string;
 };
 
+const TEST_DB = 'life_user_test';
+
 let users: UserDb[] = [];
 
 let exampleUsers: User[] = [
@@ -54,7 +56,7 @@ let created;
 let code: string | undefined;
 let agent: TestAgent;
 beforeAll(async () => {
-  await connectToDatabase('life');
+  await connectToDatabase(TEST_DB);
   let foundUsers: UserDb[] = (await request(app).get('/user/users')).body
     .message;
 

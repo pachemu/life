@@ -13,6 +13,7 @@ import type {
 const toDomain = (dbModel: bookDbModel): Book => {
   let book = new Book(
     dbModel._id.toString(),
+    dbModel.ownerId,
     dbModel.title,
     dbModel.author,
     dbModel.readPages,
@@ -21,8 +22,12 @@ const toDomain = (dbModel: bookDbModel): Book => {
   return book;
 };
 
-const toCreateDb = (input: CreateBookInput): createBookDbModel => {
+const toCreateDb = (
+  ownerId: string,
+  input: CreateBookInput,
+): createBookDbModel => {
   let book = {
+    ownerId,
     title: input.title,
     author: input.author,
     readPages: input.readPages,
@@ -44,6 +49,7 @@ const toUpdateDb = (input: UpdateBookInput): updateBookDbModel => {
 const toDb = (book: Book): bookDbModel => {
   let bookDb = {
     _id: new ObjectId(book.id),
+    ownerId: book.ownerId,
     title: book.title,
     author: book.author,
     readPages: book.readPages,

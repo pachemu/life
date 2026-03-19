@@ -13,11 +13,19 @@ import type {
   BookQuery,
 } from './book.routes.types.js';
 import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
+import { errors } from '../../../shared/errors.js';
 import { middlewares } from './book.middleware.js';
 import type { BookRepository } from '../domain/book.repository.js';
 import bookToView from './book.mapper.js';
 import { useCases } from '../application/book.useCases.js';
 import { authMiddleware } from '../../auth/interface/auth.middleware.js';
+
+const getOwnerId = (userId: string | undefined): string => {
+  if (!userId) {
+    throw new errors.AppError(HTTP_STATUSES.UNATHORIZED_401, 'Invalid token');
+  }
+  return userId;
+};
 
 export const getBookRouter = (
   router: Router,
@@ -31,7 +39,11 @@ export const getBookRouter = (
       req: RequestWithQuery<BookQuery>,
       res: Response<{ message: BookViewModel[] }>,
     ) => {
-      let result = await useCases.getBooks(bookRepositoryMongo, req.query);
+      let result = await useCases.getBooks(
+        bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
+        req.query,
+      );
       let books = result.map((el) => bookToView(el));
       return res.status(HTTP_STATUSES.OK_200).json({ message: books });
     },
@@ -46,6 +58,7 @@ export const getBookRouter = (
     ) => {
       let result = await useCases.getBookById(
         bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
         req.params.id,
       );
       let book = bookToView(result);
@@ -62,7 +75,11 @@ export const getBookRouter = (
       req: RequestWithBody<PostBookModel>,
       res: Response<{ message: BookViewModel }>,
     ) => {
-      let newBook = await useCases.createBook(bookRepositoryMongo, req.body);
+      let newBook = await useCases.createBook(
+        bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
+        req.body,
+      );
       let book = bookToView(newBook);
       return res.status(HTTP_STATUSES.CREATED_201).json({ message: book });
     },
@@ -78,6 +95,7 @@ export const getBookRouter = (
     ) => {
       const result = await useCases.deleteBook(
         bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
         req.params.id,
       );
       return res.status(HTTP_STATUSES.OK_200).json({ message: result });
@@ -87,8 +105,11 @@ export const getBookRouter = (
   router.delete(
     '/',
     authMiddleware,
-    async (_req, res: Response<{ message: boolean }>) => {
-      const result = await useCases.deleteAllBooks(bookRepositoryMongo);
+    async (req, res: Response<{ message: boolean }>) => {
+      const result = await useCases.deleteAllBooks(
+        bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
+      );
       return res.status(HTTP_STATUSES.OK_200).json({ message: result });
     },
   );
@@ -104,6 +125,7 @@ export const getBookRouter = (
     ) => {
       let newBook = await useCases.updateBook(
         bookRepositoryMongo,
+        getOwnerId(req.user?.userId),
         req.params.id,
         req.body,
       );

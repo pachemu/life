@@ -2,6 +2,7 @@ import type { ObjectId } from 'mongodb';
 
 export type bookDbModel = {
   _id: ObjectId;
+  ownerId: string;
   title: string;
   author: string;
   readPages: number;

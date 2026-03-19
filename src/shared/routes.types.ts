@@ -9,6 +9,10 @@ export type RequestWithCookie<T> = Request & {
   cookies: T;
 };
 
+export type RequestWithUser<T> = Request & {
+  user: T;
+};
+
 export type DeleteModel = {
   id: string;
 };
