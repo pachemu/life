@@ -4,14 +4,16 @@ import { createHash } from 'crypto';
 import { errors } from '../../../shared/errors.js';
 import type { EmailSender } from '../domain/email.service.js';
 import type { UserRepository } from '../domain/user.repository.js';
-import type { responseLogin, User, userData } from '../user.types.js';
+
+import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
+import { ENV } from '../../../shared/env.js';
 import type {
   RefreshToken,
   TokenPayload,
   TokenService,
-} from '../domain/token.service.js';
-import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
-import { ENV } from '../../../shared/env.js';
+} from '../../auth/domain/token.service.js';
+import type { User } from '../domain/user.entity.js';
+import type { userData, responseLogin } from './user.useCases.types.js';
 
 const getCleanPayload = (tokenService: TokenService, refreshToken: string) => {
   const payload = tokenService.verifyRefresh(refreshToken);
@@ -31,7 +33,7 @@ const assertRefreshMatches = (user: User, refreshToken: string) => {
   }
 };
 
-const SERVER_URL = ENV.MONGO_URL;
+const SERVER_URL = ENV.SERVER_URL;
 
 const createUser = async (
   repo: UserRepository,

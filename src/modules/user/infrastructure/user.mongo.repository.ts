@@ -4,9 +4,10 @@ import type {
   LoginUserInput,
 } from '../domain/user.repository.js';
 import * as bcrypt from 'bcrypt';
-import type { User, UserData, UserDbModel } from '../user.types.js';
 import { MongoServerError, ObjectId } from 'mongodb';
-import { userMappers } from './user.mapper.js';
+import { infrastructureMappers } from './user.mapper.js';
+import type { User } from '../domain/user.entity.js';
+import type { UserDbModel } from './types/user.db.model.js';
 
 const ensureIndexes = async (): Promise<void> => {
   const collection = getUserCollection();
@@ -39,7 +40,7 @@ const createUser = async (userData: CreateUserInput): Promise<User | null> => {
 
   try {
     const result = await collection.insertOne(userForInsert as UserDbModel);
-    return userMappers.toDomainUser({
+    return infrastructureMappers.toDomainUser({
       _id: result.insertedId,
       ...userForInsert,
     });
@@ -59,7 +60,7 @@ const loginUser = async (userData: LoginUserInput): Promise<null | User> => {
   });
   if (!user) return null;
   const match = await bcrypt.compare(userData.password, user.password);
-  let goodUser = userMappers.toDomainUser(user);
+  let goodUser = infrastructureMappers.toDomainUser(user);
 
   return match ? goodUser : null;
 };
@@ -68,7 +69,7 @@ const getAllUsers = async (): Promise<User[]> => {
   const collection = getUserCollection();
   let users = await collection.find();
   let foundUsers = users
-    .map((user) => userMappers.toDomainUser(user))
+    .map((user) => infrastructureMappers.toDomainUser(user))
     .toArray();
   return foundUsers;
 };
@@ -82,7 +83,7 @@ const deleteUser = async (userId: string): Promise<boolean> => {
 const findById = async (userId: string): Promise<User | null> => {
   const collection = getUserCollection();
   const user = await collection.findOne({ _id: new ObjectId(userId) });
-  return user ? userMappers.toDomainUser(user) : null;
+  return user ? infrastructureMappers.toDomainUser(user) : null;
 };
 
 const findByVerificationCode = async (code: string): Promise<User | null> => {
@@ -91,7 +92,7 @@ const findByVerificationCode = async (code: string): Promise<User | null> => {
     confirmationCode: code,
   });
   if (!user) return null;
-  let foundUser = userMappers.toDomainUser(user);
+  let foundUser = infrastructureMappers.toDomainUser(user);
   return foundUser;
 };
 

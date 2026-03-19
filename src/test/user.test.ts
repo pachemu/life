@@ -6,7 +6,7 @@ import {
   getDb,
 } from '../shared/db/mongo.js';
 import { HTTP_STATUSES } from '../shared/HTTP_STATUSES.js';
-import type { UserDbModel } from '../modules/user/user.types.js';
+import type { UserDbModel } from '../modules/user/infrastructure/types/user.db.model.js';
 import type TestAgent from 'supertest/lib/agent.js';
 import type { Collection } from 'mongodb';
 

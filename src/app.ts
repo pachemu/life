@@ -8,6 +8,7 @@ import { AppError } from './shared/errors.js';
 import { UserRepositoryMongo } from './modules/user/infrastructure/user.mongo.repository.js';
 import { getUserRouter } from './modules/user/interface/user.routes.js';
 import { emailRepository } from './modules/user/infrastructure/adapters/email.repository.js';
+import { jwtTokenService } from './modules/auth/infrastructure/jwt.token.service.js';
 
 export const app = express();
 
@@ -20,7 +21,7 @@ const booksRouter = Router();
 const userRouter = Router();
 
 getBookRouter(booksRouter, bookRepositoryMongo);
-getUserRouter(userRouter, UserRepositoryMongo, emailSender);
+getUserRouter(userRouter, UserRepositoryMongo, emailSender, jwtTokenService);
 
 // Парсинг :
 app.use(cors());

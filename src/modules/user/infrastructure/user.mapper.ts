@@ -1,4 +1,5 @@
-import type { User, UserDbModel, UserViewModel } from '../user.types.js';
+import type { User } from '../domain/user.entity.js';
+import type { UserDbModel } from './types/user.db.model.js';
 
 const toDomainUser = (db: UserDbModel): User => ({
   userId: String(db._id),
@@ -10,24 +11,6 @@ const toDomainUser = (db: UserDbModel): User => ({
   refreshTokenHash: db.refreshTokenHash ?? null,
 });
 
-const toViewUser = (user: User): UserViewModel => ({
-  userId: user.userId,
-  email: user.email,
-  login: user.login,
-});
-
-const toCreateUser = (userData: any) => {
-  let user = {
-    login: userData.login,
-    email: userData.email,
-    password: userData.password,
-    date: userData.date,
-  };
-  return user;
-};
-
-export let userMappers = {
-  toCreateUser: toCreateUser,
+export let infrastructureMappers = {
   toDomainUser,
-  toViewUser,
 };

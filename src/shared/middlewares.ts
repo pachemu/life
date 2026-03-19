@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import * as z from 'zod';
 import { HTTP_STATUSES } from './HTTP_STATUSES.js';
-import type { TokenService } from '../modules/user/domain/token.service.js'; // incorrect import, cause DDD dont provide this sh*t
+import type { TokenPayload } from '../modules/auth/domain/token.service.js';
 
 type MiddlewareFunction = (
   req: Request,
@@ -9,32 +9,39 @@ type MiddlewareFunction = (
   next: NextFunction,
 ) => void;
 
+type AccessVerifier = {
+  verifyAccess(token: string): TokenPayload;
+};
+
 const authSchema = z.object({
   authorization: z.string().startsWith('Bearer '),
 });
 
 const validationTokenMiddleware =
-  (TokenService: TokenService): MiddlewareFunction =>
-  (req: Request, res: Response, next) => {
+  (tokenService: AccessVerifier): MiddlewareFunction =>
+  (req, res, next) => {
     const auth = req.headers.authorization;
     const parsed = authSchema.safeParse({ authorization: auth });
+
     if (!parsed.success || !auth) {
       return res
         .status(HTTP_STATUSES.UNATHORIZED_401)
         .json({ message: 'Invalid auth header' });
     }
-    const jwtToken = auth.slice(7); // bearer
+
+    const jwtToken = auth.slice(7);
+
     try {
-      const payload = TokenService.verifyAccess(jwtToken);
+      const payload = tokenService.verifyAccess(jwtToken);
       (req as any).user = payload;
       next();
-    } catch (e) {
-      res
+    } catch {
+      return res
         .status(HTTP_STATUSES.UNATHORIZED_401)
         .json({ message: 'Invalid token' });
     }
   };
 
 export const sharedMiddlewares = {
-  validationTokenMiddleware: validationTokenMiddleware,
+  validationTokenMiddleware,
 };

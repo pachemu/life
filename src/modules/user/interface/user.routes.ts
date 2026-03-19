@@ -14,17 +14,20 @@ import type {
   RequestWithParams,
   RequestWithQuery,
 } from '../../../shared/routes.types.js';
-import { jwtTokenService } from '../infrastructure/jwt.token.service.js';
 import { middlewares } from './user.middleware.js';
-import type { UserViewModel } from '../user.types.js';
+import type { UserViewModel } from './user.view.model.js';
 import type { EmailSender } from '../domain/email.service.js';
-import type { AccessToken } from '../domain/token.service.js';
-import { userMappers } from '../infrastructure/user.mapper.js';
+import type {
+  AccessToken,
+  TokenService,
+} from '../../auth/domain/token.service.js';
+import { interfaceMappers } from './user.mapper.js';
 
 export const getUserRouter = (
   router: Router,
   userRepositoryMongo: UserRepository,
   EmailSender: EmailSender,
+  jwtTokenService: TokenService,
 ) => {
   router.post(
     '/register',
@@ -40,7 +43,7 @@ export const getUserRouter = (
       );
       return res
         .status(HTTP_STATUSES.CREATED_201)
-        .json({ message: userMappers.toViewUser(result) });
+        .json({ message: interfaceMappers.toViewUser(result) });
     },
   );
   router.post(
@@ -125,7 +128,7 @@ export const getUserRouter = (
     //middleware,
     async (req: Request, res: Response<{ message: UserViewModel[] }>) => {
       const result = await useCases.getAllUsers(userRepositoryMongo);
-      const view = result.map(userMappers.toViewUser);
+      const view = result.map(interfaceMappers.toViewUser);
       return res.status(HTTP_STATUSES.OK_200).send({ message: view });
     },
   );

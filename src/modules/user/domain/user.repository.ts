@@ -1,4 +1,4 @@
-import type { User } from '../user.types.js';
+import type { User } from './user.entity.js';
 
 export type CreateUserInput = {
   email: string;

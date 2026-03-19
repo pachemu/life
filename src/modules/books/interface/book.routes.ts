@@ -17,7 +17,7 @@ import { middlewares } from './book.middleware.js';
 import type { BookRepository } from '../domain/book.repository.js';
 import bookToView from './book.mapper.js';
 import { useCases } from '../application/book.useCases.js';
-import { sharedMiddlewares } from '../../../shared/middlewares.js';
+import { authMiddleware } from '../../auth/interface/auth.middleware.js';
 
 export const getBookRouter = (
   router: Router,
@@ -26,7 +26,7 @@ export const getBookRouter = (
   // Query запросы
   router.get(
     '/',
-    sharedMiddlewares.validationTokenMiddleware,
+    authMiddleware,
     async (
       req: RequestWithQuery<BookQuery>,
       res: Response<{ message: BookViewModel[] }>,
@@ -38,7 +38,7 @@ export const getBookRouter = (
   );
   router.get(
     '/:id',
-    sharedMiddlewares.validationTokenMiddleware,
+    authMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
       req: RequestWithParams<GetBookModel>,
@@ -56,7 +56,7 @@ export const getBookRouter = (
 
   router.post(
     '/',
-    sharedMiddlewares.validationTokenMiddleware,
+    authMiddleware,
     middlewares.validationCreateBookMiddleware,
     async (
       req: RequestWithBody<PostBookModel>,
@@ -70,7 +70,7 @@ export const getBookRouter = (
 
   router.delete(
     '/:id',
-    sharedMiddlewares.validationTokenMiddleware,
+    authMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
       req: RequestWithParams<DeleteBookModel>,
@@ -84,13 +84,18 @@ export const getBookRouter = (
     },
   );
 
-  router.delete('/', async (_req, res: Response<{ message: boolean }>) => {
-    const result = await useCases.deleteAllBooks(bookRepositoryMongo);
-    return res.status(HTTP_STATUSES.OK_200).json({ message: result });
-  });
+  router.delete(
+    '/',
+    authMiddleware,
+    async (_req, res: Response<{ message: boolean }>) => {
+      const result = await useCases.deleteAllBooks(bookRepositoryMongo);
+      return res.status(HTTP_STATUSES.OK_200).json({ message: result });
+    },
+  );
 
   router.put(
     '/:id',
+    authMiddleware,
     middlewares.validationUpdateBookMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
