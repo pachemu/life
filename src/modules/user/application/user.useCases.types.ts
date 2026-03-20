@@ -1,12 +1,12 @@
 import type { User } from '../domain/user.entity.js';
 
-export type responseLogin = {
+export type LoginResponse = {
   AccessToken: string;
   RefreshToken: string;
   User: User;
 };
 
-export type userData = {
+export type LoginCredentials = {
   login: string;
   password: string;
 };

@@ -2,13 +2,13 @@ import express, { Router } from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { getBookRouter } from './modules/books/interface/book.routes.js';
 import { bookRepositoryMongo } from './modules/books/infrastructure/book.mongo.repository.js';
 import { AppError } from './shared/errors.js';
 import { UserRepositoryMongo } from './modules/user/infrastructure/user.mongo.repository.js';
-import { getUserRouter } from './modules/user/interface/user.routes.js';
+import { getUserRouter } from './modules/user/interface/http/routes/user.routes.js';
 import { emailRepository } from './modules/user/infrastructure/adapters/email.repository.js';
 import { jwtTokenService } from './modules/auth/infrastructure/jwt.token.service.js';
+import { getBookRouter } from './modules/books/interface/http/routes/book.routes.js';
 
 export const app = express();
 

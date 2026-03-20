@@ -1,24 +1,24 @@
 import type { Router, Response } from 'express';
+import { errors } from '../../../../../shared/errors.js';
+import { HTTP_STATUSES } from '../../../../../shared/HTTP_STATUSES.js';
+import { authMiddleware } from '../../../../auth/interface/auth.middleware.js';
+import { useCases } from '../../../application/book.useCases.js';
+import type { BookRepository } from '../../../domain/book.repository.js';
+import { middlewares } from '../middlewares/book.middleware.js';
 import type {
-  GetBookModel,
+  RequestWithQuery,
+  BookQuery,
   BookViewModel,
   RequestWithParams,
-  RequestWithQuery,
+  BookIdParams,
   RequestWithBody,
-  PostBookModel,
-  DeleteBookModel,
+  CreateBookBody,
+  DeleteBookParams,
   RequestWithParamsAndBody,
-  UpdateBookModelParams,
-  UpdateBookModelBody,
-  BookQuery,
+  UpdateBookParams,
+  UpdateBookBody,
 } from './book.routes.types.js';
-import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
-import { errors } from '../../../shared/errors.js';
-import { middlewares } from './book.middleware.js';
-import type { BookRepository } from '../domain/book.repository.js';
-import bookToView from './book.mapper.js';
-import { useCases } from '../application/book.useCases.js';
-import { authMiddleware } from '../../auth/interface/auth.middleware.js';
+import bookToView from '../mappers/book.mapper.js';
 
 const getOwnerId = (userId: string | undefined): string => {
   if (!userId) {
@@ -53,7 +53,7 @@ export const getBookRouter = (
     authMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
-      req: RequestWithParams<GetBookModel>,
+      req: RequestWithParams<BookIdParams>,
       res: Response<{ message: BookViewModel }>,
     ) => {
       let result = await useCases.getBookById(
@@ -72,7 +72,7 @@ export const getBookRouter = (
     authMiddleware,
     middlewares.validationCreateBookMiddleware,
     async (
-      req: RequestWithBody<PostBookModel>,
+      req: RequestWithBody<CreateBookBody>,
       res: Response<{ message: BookViewModel }>,
     ) => {
       let newBook = await useCases.createBook(
@@ -90,7 +90,7 @@ export const getBookRouter = (
     authMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
-      req: RequestWithParams<DeleteBookModel>,
+      req: RequestWithParams<DeleteBookParams>,
       res: Response<{ message: boolean }>,
     ) => {
       const result = await useCases.deleteBook(
@@ -120,7 +120,7 @@ export const getBookRouter = (
     middlewares.validationUpdateBookMiddleware,
     middlewares.validationIdBookMiddleware,
     async (
-      req: RequestWithParamsAndBody<UpdateBookModelParams, UpdateBookModelBody>,
+      req: RequestWithParamsAndBody<UpdateBookParams, UpdateBookBody>,
       res: Response<{ message: BookViewModel }>,
     ) => {
       let newBook = await useCases.updateBook(

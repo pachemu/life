@@ -4,24 +4,24 @@ import type {
   RegisterUserInput,
   UserRepository,
   VerifyUserInput,
-} from '../domain/user.repository.js';
-import { useCases } from '../application/user.useCases.js';
-import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
+} from '../../../domain/user.repository.js';
+import { useCases } from '../../../application/user.useCases.js';
+import { HTTP_STATUSES } from '../../../../../shared/HTTP_STATUSES.js';
 import type {
-  DeleteModel,
+  IdParams,
   RequestWithBody,
   RequestWithCookie,
   RequestWithParams,
   RequestWithQuery,
-} from '../../../shared/routes.types.js';
-import { middlewares } from './user.middleware.js';
-import type { UserViewModel } from './user.view.model.js';
-import type { EmailSender } from '../domain/email.service.js';
+} from '../../../../../shared/routes.types.js';
+import { middlewares } from '../middlewares/user.middleware.js';
+import type { UserViewModel } from './user.routes.types.js';
+import type { EmailSender } from '../../../domain/email.service.js';
 import type {
   AccessToken,
   TokenService,
-} from '../../auth/domain/token.service.js';
-import { interfaceMappers } from './user.mapper.js';
+} from '../../../../auth/domain/token.service.js';
+import { interfaceMappers } from '../mappers/user.mapper.js';
 
 export const getUserRouter = (
   router: Router,
@@ -136,7 +136,7 @@ export const getUserRouter = (
     '/delete/:id',
     middlewares.validationIdUserMiddleware,
     async (
-      req: RequestWithParams<DeleteModel>,
+      req: RequestWithParams<IdParams>,
       res: Response<{ message: boolean }>,
     ) => {
       const result = await useCases.deleteUser(

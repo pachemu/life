@@ -8,30 +8,27 @@ export type BookViewModel = {
   readPages: number;
 };
 
-export type GetBookModel = {
+export type BookIdParams = {
   id: string;
 };
-export type PostBookModel = {
+
+export type CreateBookBody = {
   title: string;
   author: string;
   totalPages: number;
   readPages: number;
 };
 
-export type DeleteBookModel = {
-  id: string;
-};
+export type DeleteBookParams = BookIdParams;
 
-export type UpdateBookModelBody = {
+export type UpdateBookBody = {
   title: string;
   author: string;
   totalPages: number;
   readPages: number;
 };
 
-export type UpdateBookModelParams = {
-  id: string;
-};
+export type UpdateBookParams = BookIdParams;
 
 export type BookQuery = {
   title?: string;

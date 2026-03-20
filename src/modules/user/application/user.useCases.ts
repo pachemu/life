@@ -13,7 +13,10 @@ import type {
   TokenService,
 } from '../../auth/domain/token.service.js';
 import type { User } from '../domain/user.entity.js';
-import type { userData, responseLogin } from './user.useCases.types.js';
+import type {
+  LoginCredentials,
+  LoginResponse,
+} from './user.useCases.types.js';
 
 const getCleanPayload = (tokenService: TokenService, refreshToken: string) => {
   const payload = tokenService.verifyRefresh(refreshToken);
@@ -76,9 +79,9 @@ const createUser = async (
 
 const loginUser = async (
   repo: UserRepository,
-  userData: userData,
+  userData: LoginCredentials,
   tokenService: TokenService,
-): Promise<responseLogin> => {
+): Promise<LoginResponse> => {
   let user = await repo.loginUser(userData);
   if (!user || !user.isConfirmed) {
     throw new errors.AppError(401, 'Unathorized');

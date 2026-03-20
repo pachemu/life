@@ -13,6 +13,6 @@ export type RequestWithUser<T> = Request & {
   user: T;
 };
 
-export type DeleteModel = {
+export type IdParams = {
   id: string;
 };
