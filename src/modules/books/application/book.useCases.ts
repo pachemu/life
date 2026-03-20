@@ -1,4 +1,5 @@
-import { errors } from '../../../shared/errors.js';
+import { AppError, errors } from '../../../shared/errors.js';
+import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
 import { Book } from '../domain/book.entity.js';
 import type {
   BookRepository,
@@ -13,11 +14,7 @@ const getBooks = async (
   query: BookQuery,
 ) => {
   let books;
-  if (!query.title) {
-    books = await repo.findAll(ownerId);
-  } else {
-    books = await repo.findByQuery(ownerId, query);
-  }
+  books = await repo.findByQuery(ownerId, query);
   return books;
 };
 
@@ -31,16 +28,6 @@ const getBookById = async (
   return book;
 };
 
-// const readPages = async (repo: BookRepository, bookId: string, pages: number) => {
-//     let book = await repo.findById(bookId)
-//     let bookData = {
-//         readPages: pages
-//     }
-//     if (!book) throw new errors.NotFoundError('Book not found')
-//     book.updateReadPages(pages)
-//     await repo.update(bookId, bookData)
-//     return book
-// } // for better times
 const createBook = async (
   repo: BookRepository,
   ownerId: string,
@@ -81,7 +68,15 @@ const updateBook = async (
 ) => {
   let book = await repo.findById(bookId, ownerId);
   if (!book) throw new errors.NotFoundError('Book not found');
-  book.updateDetails(bookData);
+  try {
+    book.updateDetails(bookData);
+  } catch (e) {
+    throw new AppError(
+      HTTP_STATUSES.BAD_REQUEST_400,
+      'couldnt update book, check your query',
+    );
+  }
+
   let result = await repo.update(book.id, ownerId, bookData);
   return result;
 };

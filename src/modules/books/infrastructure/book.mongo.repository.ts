@@ -1,6 +1,6 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Filter } from 'mongodb';
 import { getDb } from '../../../shared/db/mongo.js';
-import type { bookDbModel } from './types/book.db.model.js';
+import type { BookDbModel } from './types/book.db.model.js';
 import { bookMapper } from './book.mapper.js';
 import type { Book } from '../domain/book.entity.js';
 import type {
@@ -8,10 +8,12 @@ import type {
   CreateBookInput,
   UpdateBookInput,
 } from '../domain/book.repository.js';
+import { AppError } from '../../../shared/errors.js';
+import { HTTP_STATUSES } from '../../../shared/HTTP_STATUSES.js';
 
 const COLLECTION = 'books';
 
-const getCollection = () => getDb<bookDbModel>(COLLECTION);
+const getCollection = () => getDb<BookDbModel>(COLLECTION);
 
 const findAll = async (ownerId: string): Promise<Book[]> => {
   const collection = getCollection();
@@ -24,7 +26,7 @@ const findByQuery = async (
   query: BookQuery,
 ): Promise<Book[]> => {
   const collection = getCollection();
-  const filter: any = { ownerId };
+  const filter: Filter<BookDbModel> = { ownerId };
   if (query.title) filter.title = { $regex: query.title, $options: 'i' };
   if (query.author) filter.author = { $regex: query.author, $options: 'i' };
   if (query.readPages !== undefined) filter.readPages = query.readPages;
@@ -40,13 +42,19 @@ const findById = async (id: string, ownerId: string): Promise<Book | null> => {
   return docs ? bookMapper.toDomain(docs) : null;
 };
 
-const create = async (ownerId: string, dataBook: CreateBookInput): Promise<Book> => {
+const create = async (
+  ownerId: string,
+  dataBook: CreateBookInput,
+): Promise<Book> => {
   const collection = getCollection();
   const dbModel = bookMapper.toCreateDb(ownerId, dataBook);
-  const id = (await collection.insertOne(dbModel as bookDbModel)).insertedId;
+  const id = (await collection.insertOne(dbModel as BookDbModel)).insertedId;
   const createdBook = await collection.findOne({ _id: id, ownerId });
   if (!createdBook) {
-    throw new Error('created book doesnt exist');
+    throw new AppError(
+      HTTP_STATUSES.BAD_REQUEST_400,
+      'created book doesnt exist',
+    );
   }
   return await bookMapper.toDomain(createdBook);
 };
@@ -57,10 +65,19 @@ const update = async (
   dataBook: UpdateBookInput,
 ): Promise<Book> => {
   const collection = getCollection();
-  await collection.updateOne({ _id: new ObjectId(id), ownerId }, { $set: dataBook });
-  const updatedBook = await collection.findOne({ _id: new ObjectId(id), ownerId });
+  await collection.updateOne(
+    { _id: new ObjectId(id), ownerId },
+    { $set: dataBook },
+  );
+  const updatedBook = await collection.findOne({
+    _id: new ObjectId(id),
+    ownerId,
+  });
   if (!updatedBook) {
-    throw new Error('created book doesnt exist');
+    throw new AppError(
+      HTTP_STATUSES.BAD_REQUEST_400,
+      'created book doesnt exist',
+    );
   }
   return bookMapper.toDomain(updatedBook);
 };
@@ -69,7 +86,7 @@ const deleteById = async (id: string, ownerId: string): Promise<boolean> => {
   const collection = getCollection();
   let result = await collection.deleteOne({ _id: new ObjectId(id), ownerId });
   if (result.deletedCount !== 1) {
-    throw new Error('book not found');
+    throw new AppError(HTTP_STATUSES.NOT_FOUND_404, 'not found book');
   }
   return true;
 };
@@ -79,7 +96,6 @@ const deleteAllBooks = async (ownerId: string): Promise<boolean> => {
   let result = await collection.deleteMany({ ownerId });
   return result.acknowledged;
 };
-// user
 
 export const bookRepositoryMongo = {
   findAll,

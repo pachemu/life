@@ -11,13 +11,23 @@ export type BookViewModel = {
 export type GetBookModel = {
   id: string;
 };
-export type PostBookModel = Omit<BookViewModel, 'id'>;
+export type PostBookModel = {
+  title: string;
+  author: string;
+  totalPages: number;
+  readPages: number;
+};
 
 export type DeleteBookModel = {
   id: string;
 };
 
-export type UpdateBookModelBody = Omit<BookViewModel, 'id'>;
+export type UpdateBookModelBody = {
+  title: string;
+  author: string;
+  totalPages: number;
+  readPages: number;
+};
 
 export type UpdateBookModelParams = {
   id: string;

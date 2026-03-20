@@ -5,12 +5,12 @@ import type {
   UpdateBookInput,
 } from '../domain/book.repository.js';
 import type {
-  bookDbModel,
-  createBookDbModel,
-  updateBookDbModel,
+  BookDbModel,
+  CreateBookDbModel,
+  UpdateBookDbModel,
 } from './types/book.db.model.js';
 
-const toDomain = (dbModel: bookDbModel): Book => {
+const toDomain = (dbModel: BookDbModel): Book => {
   let book = new Book(
     dbModel._id.toString(),
     dbModel.ownerId,
@@ -25,7 +25,7 @@ const toDomain = (dbModel: bookDbModel): Book => {
 const toCreateDb = (
   ownerId: string,
   input: CreateBookInput,
-): createBookDbModel => {
+): CreateBookDbModel => {
   let book = {
     ownerId,
     title: input.title,
@@ -36,7 +36,7 @@ const toCreateDb = (
   return book;
 };
 
-const toUpdateDb = (input: UpdateBookInput): updateBookDbModel => {
+const toUpdateDb = (input: UpdateBookInput): UpdateBookDbModel => {
   let book = {
     title: input.title,
     author: input.author,
@@ -46,7 +46,7 @@ const toUpdateDb = (input: UpdateBookInput): updateBookDbModel => {
   return book;
 };
 
-const toDb = (book: Book): bookDbModel => {
+const toDb = (book: Book): BookDbModel => {
   let bookDb = {
     _id: new ObjectId(book.id),
     ownerId: book.ownerId,

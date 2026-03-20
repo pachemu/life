@@ -1,6 +1,6 @@
 import type { ObjectId } from 'mongodb';
 
-export type bookDbModel = {
+export type BookDbModel = {
   _id: ObjectId;
   ownerId: string;
   title: string;
@@ -9,9 +9,15 @@ export type bookDbModel = {
   totalPages: number;
 };
 
-export type createBookDbModel = Omit<bookDbModel, '_id'>;
+export type CreateBookDbModel = {
+  ownerId: string;
+  title: string;
+  author: string;
+  readPages: number;
+  totalPages: number;
+};
 
-export type updateBookDbModel = {
+export type UpdateBookDbModel = {
   title: string | undefined;
   author: string | undefined;
   readPages: number | undefined;
