@@ -1,8 +1,6 @@
 import { AppError } from '../../../shared/errors.js';
 
-type NutritionUpdate = {
-  date?: string;
-  calories?: number;
+type NutritionMacros = {
   fats?: number;
   carbs?: number;
   protein?: number;
@@ -18,7 +16,7 @@ export class Nutrition {
   constructor(
     public readonly id: string,
     public readonly ownerId: string,
-    public date: string,
+    public readonly date: string,
     public calories: number,
     public fats: number,
     public carbs: number,
@@ -27,33 +25,53 @@ export class Nutrition {
     if (!date.trim()) {
       throw new AppError(400, 'Date is required');
     }
-    assertNonNegative(calories, 'Calories');
+
     assertNonNegative(fats, 'Fats');
     assertNonNegative(carbs, 'Carbs');
     assertNonNegative(protein, 'Protein');
+
+    this.recalculateCalories();
   }
 
-  // updateNutritionFacts(pages: number) {
-  //   if (pages < 0 || pages > this.carbs) {
-  //     throw new AppError(400, 'Invalid page number');
-  //   }
-  //   this.fat = pages;
-  // }
-  updateDetails(data: NutritionUpdate) {
-    if (data.date !== undefined) {
-      if (!data.date.trim()) {
-        throw new AppError(400, 'Date is required');
-      }
-      this.date = data.date;
-    }
-    if (data.calories !== undefined) this.calories = data.calories;
-    if (data.fats !== undefined) this.fats = data.fats;
-    if (data.carbs !== undefined) this.carbs = data.carbs;
-    if (data.protein !== undefined) this.protein = data.protein;
+  private recalculateCalories() {
+    this.calories = this.fats * 9 + this.protein * 4 + this.carbs * 4;
+  }
 
-    assertNonNegative(this.calories, 'Calories');
-    assertNonNegative(this.fats, 'Fats');
-    assertNonNegative(this.carbs, 'Carbs');
-    assertNonNegative(this.protein, 'Protein');
+  addMacros(data: NutritionMacros) {
+    if (data.fats !== undefined) {
+      assertNonNegative(data.fats, 'Fats');
+      this.fats += data.fats;
+    }
+
+    if (data.carbs !== undefined) {
+      assertNonNegative(data.carbs, 'Carbs');
+      this.carbs += data.carbs;
+    }
+
+    if (data.protein !== undefined) {
+      assertNonNegative(data.protein, 'Protein');
+      this.protein += data.protein;
+    }
+
+    this.recalculateCalories();
+  }
+
+  updateDetails(data: NutritionMacros) {
+    if (data.fats !== undefined) {
+      assertNonNegative(data.fats, 'Fats');
+      this.fats = data.fats;
+    }
+
+    if (data.carbs !== undefined) {
+      assertNonNegative(data.carbs, 'Carbs');
+      this.carbs = data.carbs;
+    }
+
+    if (data.protein !== undefined) {
+      assertNonNegative(data.protein, 'Protein');
+      this.protein = data.protein;
+    }
+
+    this.recalculateCalories();
   }
 }
