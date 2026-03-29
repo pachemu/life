@@ -1,15 +1,7 @@
-import { AppError } from '../../../shared/errors.js';
-
 type NutritionMacros = {
   fats?: number;
   carbs?: number;
   protein?: number;
-};
-
-const assertNonNegative = (value: number, field: string) => {
-  if (value < 0) {
-    throw new AppError(400, `${field} cannot be negative`);
-  }
 };
 
 export class Nutrition {
@@ -17,20 +9,16 @@ export class Nutrition {
     public readonly id: string,
     public readonly ownerId: string,
     public readonly date: string,
-    public calories: number,
+    public calories: number | undefined,
     public fats: number,
     public carbs: number,
     public protein: number,
   ) {
-    if (!date.trim()) {
-      throw new AppError(400, 'Date is required');
+    if (calories === undefined) {
+      this.recalculateCalories();
+    } else {
+      this.calories = calories;
     }
-
-    assertNonNegative(fats, 'Fats');
-    assertNonNegative(carbs, 'Carbs');
-    assertNonNegative(protein, 'Protein');
-
-    this.recalculateCalories();
   }
 
   private recalculateCalories() {
@@ -39,17 +27,14 @@ export class Nutrition {
 
   addMacros(data: NutritionMacros) {
     if (data.fats !== undefined) {
-      assertNonNegative(data.fats, 'Fats');
       this.fats += data.fats;
     }
 
     if (data.carbs !== undefined) {
-      assertNonNegative(data.carbs, 'Carbs');
       this.carbs += data.carbs;
     }
 
     if (data.protein !== undefined) {
-      assertNonNegative(data.protein, 'Protein');
       this.protein += data.protein;
     }
 
@@ -58,17 +43,14 @@ export class Nutrition {
 
   updateDetails(data: NutritionMacros) {
     if (data.fats !== undefined) {
-      assertNonNegative(data.fats, 'Fats');
       this.fats = data.fats;
     }
 
     if (data.carbs !== undefined) {
-      assertNonNegative(data.carbs, 'Carbs');
       this.carbs = data.carbs;
     }
 
     if (data.protein !== undefined) {
-      assertNonNegative(data.protein, 'Protein');
       this.protein = data.protein;
     }
 

@@ -23,23 +23,26 @@ let accessToken = '';
 let secondaryAccessToken = '';
 const TEST_DB = 'life_nutrition_test';
 
+const getCalories = (fats: number, carbs: number, protein: number) =>
+  fats * 9 + carbs * 4 + protein * 4;
+
 const nutritionsToCreate = [
   {
-    date: '2026-03-20',
-    calories: 2200,
+    date: '20-03-2026',
+    calories: getCalories(70, 250, 140),
     fats: 70,
     carbs: 250,
     protein: 140,
   },
   {
-    date: '2026-03-21',
-    calories: 2100,
+    date: '21-03-2026',
+    calories: getCalories(60, 230, 150),
     fats: 60,
     carbs: 230,
     protein: 150,
   },
   {
-    date: '2026-03-22',
+    date: '22-03-2026',
     calories: 2400,
     fats: 80,
     carbs: 260,
@@ -48,7 +51,7 @@ const nutritionsToCreate = [
 ];
 
 const incorrectedData = {
-  date: '21-03-2026',
+  date: '2026-03-21',
   calories: -10,
   fats: 'many',
   carbs: -30,
@@ -115,8 +118,8 @@ beforeAll(async () => {
     .post('/nutrition')
     .set(authHeader(secondaryAccessToken))
     .send({
-      date: '2026-03-25',
-      calories: 1900,
+      date: '25-03-2026',
+      calories: getCalories(55, 180, 130),
       fats: 55,
       carbs: 180,
       protein: 130,
@@ -148,7 +151,7 @@ describe('/nutrition', () => {
 
   it('should return 400 and message about invalid date parameter', async () => {
     await request(app)
-      .get('/nutrition/20-03-2026')
+      .get('/nutrition/2026-03-20')
       .set(authHeader())
       .expect(HTTP_STATUSES.BAD_REQUEST_400)
       .expect(({ body }) => {
@@ -157,7 +160,7 @@ describe('/nutrition', () => {
   });
 
   it('should return 200 and correct array by query parameters', async () => {
-    const data = { date: '2026-03-20' };
+    const data = { date: '20-03-2026' };
     const expected = createdNutritions.filter(
       (nutrition) => nutrition.date === data.date,
     );
@@ -171,8 +174,8 @@ describe('/nutrition', () => {
 
   it('should return 201 and new nutrition day', async () => {
     const newNutrition = {
-      date: '2026-03-23',
-      calories: 2500,
+      date: '23-03-2026',
+      calories: getCalories(85, 270, 170),
       fats: 85,
       carbs: 270,
       protein: 170,
@@ -218,8 +221,8 @@ describe('/nutrition', () => {
       .post('/nutrition')
       .set(authHeader())
       .send({
-        date: '2026-03-24',
-        calories: 2300,
+        date: '24-03-2026',
+        calories: getCalories(75, 240, 150),
         fats: 75,
         carbs: 240,
         protein: 150,
@@ -236,14 +239,14 @@ describe('/nutrition', () => {
 
   it('shouldn`t delete item with unexpected date', async () => {
     await request(app)
-      .delete('/nutrition/2026-03-31')
+      .delete('/nutrition/31-03-2026')
       .set(authHeader())
       .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'Nutrition not found' });
   });
 
   it('shouldn`t delete item with invalid date format', async () => {
     await request(app)
-      .delete('/nutrition/31-03-2026')
+      .delete('/nutrition/2026-03-31')
       .set(authHeader())
       .expect(HTTP_STATUSES.BAD_REQUEST_400)
       .expect(({ body }) => {
@@ -255,30 +258,31 @@ describe('/nutrition', () => {
     let res = await request(app)
       .put(`/nutrition/${createdNutritions[0]?.date}`)
       .set(authHeader())
-      .send({ calories: 2600 })
+      .send({ protein: 200 })
       .expect(HTTP_STATUSES.OK_200);
 
     const updatedNutrition = res.body.message;
-    expect(updatedNutrition.calories).toBe(2600);
+    expect(updatedNutrition.protein).toBe(200);
+    expect(updatedNutrition.calories).toBe(getCalories(70, 250, 200));
     expect(updatedNutrition.date).toBe(createdNutritions[0]?.date);
   });
 
   it(`shouldn't update nutrition with unexpected date and return 404`, async () => {
     await request(app)
-      .put('/nutrition/2026-04-01')
+      .put('/nutrition/01-04-2026')
       .set(authHeader())
       .send({
-        calories: 3000,
+        protein: 300,
       })
       .expect(HTTP_STATUSES.NOT_FOUND_404, { message: 'Nutrition not found' });
   });
 
   it(`shouldn't update nutrition with invalid date format and return 400`, async () => {
     await request(app)
-      .put('/nutrition/01-04-2026')
+      .put('/nutrition/2026-04-01')
       .set(authHeader())
       .send({
-        calories: 3000,
+        protein: 300,
       })
       .expect(HTTP_STATUSES.BAD_REQUEST_400)
       .expect(({ body }) => {

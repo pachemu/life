@@ -18,7 +18,7 @@ type ValidateInput = (
 const date = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'invalid date format');
+  .regex(/^\d{2}-\d{2}-\d{4}$/, 'invalid date format');
 const nutritionValue = z.number().min(0);
 
 const nutritionCreateSchema = z.object({

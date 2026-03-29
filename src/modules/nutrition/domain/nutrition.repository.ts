@@ -2,7 +2,7 @@ import type { Nutrition } from './nutrition.entity.js';
 
 export type CreateDailyNutritionInput = {
   date: string;
-  calories: number;
+  calories?: number;
   carbs: number;
   protein: number;
   fats: number;

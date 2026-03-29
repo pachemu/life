@@ -10,6 +10,15 @@ import type {
   UpdateDailyNutritionInput,
 } from '../domain/nutrition.repository.js';
 
+const getCalories = (
+  fats: number,
+  carbs: number,
+  protein: number,
+  calories?: number,
+): number => {
+  return calories ?? fats * 9 + carbs * 4 + protein * 4;
+};
+
 const toDomain = (dbModel: NutritionDbModel): Nutrition => {
   let nutrition = new Nutrition(
     dbModel._id.toString(),
@@ -30,7 +39,12 @@ const toCreateDb = (
   let nutrition = {
     ownerId,
     date: input.date,
-    calories: input.calories,
+    calories: getCalories(
+      input.fats,
+      input.carbs,
+      input.protein,
+      input.calories,
+    ),
     fats: input.fats,
     carbs: input.carbs,
     protein: input.protein,
@@ -55,7 +69,12 @@ const toDb = (nutrition: Nutrition): NutritionDbModel => {
     _id: new ObjectId(nutrition.id),
     ownerId: nutrition.ownerId,
     date: nutrition.date,
-    calories: nutrition.calories,
+    calories: getCalories(
+      nutrition.fats,
+      nutrition.carbs,
+      nutrition.protein,
+      nutrition.calories,
+    ),
     fats: nutrition.fats,
     carbs: nutrition.carbs,
     protein: nutrition.protein,

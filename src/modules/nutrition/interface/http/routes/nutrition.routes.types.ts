@@ -18,10 +18,10 @@ export type NutritionDateParams = {
 
 export type CreateNutritionDayBody = {
   date: string;
-  calories: number;
   fats: number;
   protein: number;
   carbs: number;
+  calories?: number;
 };
 
 export type DeleteNutritionParams = NutritionDateParams;

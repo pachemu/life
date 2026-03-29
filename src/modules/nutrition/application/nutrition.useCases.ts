@@ -30,7 +30,7 @@ const createDailyNutrition = async (
   ownerId: string,
   nutritionData: CreateDailyNutritionInput,
 ) => {
-  new Nutrition(
+  const nutrition = new Nutrition(
     'temp',
     ownerId,
     nutritionData.date,
@@ -45,7 +45,14 @@ const createDailyNutrition = async (
     throw new errors.AppError(409, 'Nutrition for this date already exists');
   }
 
-  return repo.create(ownerId, nutritionData);
+  const dataForCreate: CreateDailyNutritionInput = {
+    ...nutritionData,
+    ...(nutrition.calories !== undefined
+      ? { calories: nutrition.calories }
+      : {}),
+  };
+
+  return repo.create(ownerId, dataForCreate);
 };
 
 const deleteNutrition = async (
@@ -68,7 +75,15 @@ const updateDailyNutrition = async (
   let nutrition = await repo.findByDate(nutritionDate, ownerId);
   if (!nutrition) throw new errors.NotFoundError('Nutrition not found');
   nutrition.updateDetails(nutritionData);
-  let result = await repo.update(nutrition.date, ownerId, nutritionData);
+
+  const dataForUpdate: UpdateDailyNutritionInput = {
+    ...nutritionData,
+    ...(nutrition.calories !== undefined
+      ? { calories: nutrition.calories }
+      : {}),
+  };
+
+  let result = await repo.update(nutrition.date, ownerId, dataForUpdate);
   return result;
 };
 
