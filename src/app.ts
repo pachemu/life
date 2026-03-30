@@ -11,6 +11,8 @@ import { jwtTokenService } from './modules/auth/infrastructure/jwt.token.service
 import { getBookRouter } from './modules/books/interface/http/routes/book.routes.js';
 import { nutritionRepositoryMongo } from './modules/nutrition/infrastructure/nutrition.mongo.repository.js';
 import { getNutritionRouter } from './modules/nutrition/interface/http/routes/nutrition.routes.js';
+import { workoutRepositoryMongo } from './modules/workouts/infrastructure/workout.mongo.repository.js';
+import { getWorkoutRouter } from './modules/workouts/interface/http/routes/workout.routes.js';
 
 export const app = express();
 
@@ -22,10 +24,12 @@ const emailSender =
 const booksRouter = Router();
 const userRouter = Router();
 const nutritionRouter = Router();
+const workoutsRouter = Router();
 
 getBookRouter(booksRouter, bookRepositoryMongo);
 getUserRouter(userRouter, UserRepositoryMongo, emailSender, jwtTokenService);
 getNutritionRouter(nutritionRouter, nutritionRepositoryMongo);
+getWorkoutRouter(workoutsRouter, workoutRepositoryMongo);
 
 // Парсинг :
 app.use(cors());
@@ -36,6 +40,7 @@ app.use(cookieParser());
 app.use('/books', booksRouter);
 app.use('/user', userRouter);
 app.use('/nutrition', nutritionRouter);
+app.use('/workouts', workoutsRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
